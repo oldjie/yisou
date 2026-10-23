@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">一搜</string>
+    <string name="search_count">已主动搜索 %1$d 次</string>
+    <string name="widget_title">一搜 · 主动搜索</string>
+    <string name="douban">豆瓣</string>
+    <string name="taobao">淘宝</string>
+    <string name="xianyu">闲鱼</string>
+    <string name="wechat">微信</string>
+    <string name="wechat_service_name">一搜 · 微信搜索辅助</string>
+    <string name="wechat_service_description">仅在你点击微信搜索后，按已保存的位置模拟点击和长按，将一搜写入剪贴板的关键词粘贴到微信再点搜索。不读取界面控件，不截图。首次保存点击位置后自动使用；可在一搜设置里重新校准或清除。普通搜索最多 20 秒，首次校准最多 2 分钟，切换应用即停止。</string>
+</resources>

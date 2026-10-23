@@ -1,0 +1,38 @@
+"""Reviewed public source allowlist, shared by packaging and release checks."""
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+ROOT_FILES = (
+    'README.md', 'LICENSE', 'PRIVACY.md', 'CONTRIBUTING.md', 'SECURITY.md',
+    'THIRD_PARTY_NOTICES.md', 'build.gradle', 'settings.gradle', 'gradle.properties',
+    'app/build.gradle', 'gradlew', 'gradlew.bat', '.gitignore', '.gitattributes',
+    'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar',
+    'gradle/LICENSE-APACHE-2.0.txt', 'docs/RESEARCH.md', 'docs/TESTING.md',
+    'docs/SECURITY_REVIEW.md',
+    # Only these two images were reviewed: an empty home and a synthetic fixture.
+    'docs/home-yisou-0.3.0.png', 'docs/calibration-0.3.1.png',
+)
+SOURCE_DIRS = {
+    'app/src': {'.java', '.xml'},
+    'scripts': {'.py', '.ps1'},
+    'tests': {'.py', '.java', '.xml'},
+    '.github': {'.yml', '.yaml', '.md'},
+}
+
+def collect():
+    selected = set(ROOT_FILES)
+    for folder, suffixes in SOURCE_DIRS.items():
+        for path in (ROOT / folder).rglob('*'):
+            if '__pycache__' in path.parts or not path.is_file():
+                continue
+            if path.suffix not in suffixes:
+                raise ValueError('Unreviewed source file: ' + str(path.relative_to(ROOT)))
+            selected.add(path.relative_to(ROOT).as_posix())
+    for name in selected:
+        path = ROOT / name
+        if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(ROOT):
+            raise ValueError('Unsafe or missing public source: ' + name)
+    return sorted(selected)
+
+if __name__ == '__main__':
+    print('\n'.join(collect()))

@@ -1,0 +1,36 @@
+.tools/
+.gradle/
+.idea/
+local.properties
+**/build/
+dist/
+*.jks
+*.keystore
+*.p12
+*.idsig
+sdk-repository.xml
+appstore-reference.html
+docs/reference/
+
+# Local tools, credentials, runtime data and unpublished build products
+null/
+PowerShell*/
+**/__pycache__/
+*.pyc
+*.apk
+*.aab
+*.pem
+*.key
+*.log
+*.hprof
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# Screenshots require review; only the public examples are tracked
+*.jpg
+*.jpeg
+docs/*.png
+!docs/home-yisou-0.3.0.png
+!docs/calibration-0.3.1.png

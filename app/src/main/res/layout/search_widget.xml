@@ -1,0 +1,9 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/widget_background">
+    <TextView android:id="@+id/widget_count" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/widget_title" android:textSize="12sp" android:textColor="#656B63" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center_vertical">
+        <TextView android:id="@+id/widget_douban" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:gravity="center" android:text="@string/douban" android:textSize="18sp" android:textColor="#282D28" />
+        <TextView android:id="@+id/widget_taobao" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:gravity="center" android:text="@string/taobao" android:textSize="18sp" android:textColor="#282D28" />
+        <TextView android:id="@+id/widget_xianyu" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:gravity="center" android:text="@string/xianyu" android:textSize="18sp" android:textColor="#282D28" />
+        <TextView android:id="@+id/widget_wechat" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:gravity="center" android:text="@string/wechat" android:textSize="18sp" android:textColor="#282D28" />
+    </LinearLayout>
+</LinearLayout>

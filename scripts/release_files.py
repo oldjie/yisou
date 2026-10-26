@@ -3,21 +3,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ROOT_FILES = (
-    'README.md', 'LICENSE', 'PRIVACY.md', 'CONTRIBUTING.md', 'SECURITY.md',
+    'README.md', 'LICENSE', 'LICENSING.md', 'PRIVACY.md', 'CONTRIBUTING.md', 'SECURITY.md',
     'THIRD_PARTY_NOTICES.md', 'build.gradle', 'settings.gradle', 'gradle.properties',
     'app/build.gradle', 'gradlew', 'gradlew.bat', '.gitignore', '.gitattributes',
     'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar',
     'gradle/LICENSE-APACHE-2.0.txt', 'docs/RESEARCH.md', 'docs/TESTING.md',
-    'docs/SECURITY_REVIEW.md',
+    'docs/SECURITY_REVIEW.md', 'docs/WIDGETS.md',
     # Reviewed empty-home screenshots and a synthetic calibration fixture only.
     'docs/home-yisou-0.3.0.png', 'docs/calibration-0.3.1.png',
     'docs/home-yisou-0.3.3.png',
     'docs/home-yisou-0.3.5.png', 'docs/icon-yisou-0.3.5.png',
     'docs/home-yisou-0.3.6.png', 'docs/icon-yisou-0.3.6.png',
     'docs/home-yisou-0.3.7.png',
+    'docs/widgets-yisou-0.4.0.png',
     # Unmodified upstream font plus its bundled redistribution license.
     'app/src/main/res/font/noto_serif_sc_regular.otf',
     'app/src/main/res/raw/noto_serif_sc_ofl.txt',
+    'app/src/main/res/raw/agpl_3.txt',
 )
 SOURCE_DIRS = {
     'app/src': {'.java', '.xml'},

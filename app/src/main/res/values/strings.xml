@@ -2,6 +2,10 @@
     <string name="app_name">一搜</string>
     <string name="search_count">已主动搜索 %1$d 次</string>
     <string name="widget_title">一搜 · 主动搜索</string>
+    <string name="widget_compact_name">一搜 · 快捷搜索（4×1）</string>
+    <string name="widget_panel_name">一搜 · 搜索面板（4×2）</string>
+    <string name="widget_description">点软件图标，输入关键词，直达搜索</string>
+    <string name="widget_query_hint">输入关键词…</string>
     <string name="douban">豆瓣</string>
     <string name="taobao">淘宝</string>
     <string name="xianyu">闲鱼</string>

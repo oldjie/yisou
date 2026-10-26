@@ -15,6 +15,9 @@ def check():
     files = collect()
     font = (ROOT/'app/src/main/res/font/noto_serif_sc_regular.otf').read_bytes()
     assert hashlib.sha256(font).hexdigest() == 'e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3', 'Bundled font differs from reviewed upstream binary'
+    license_text = (ROOT/'LICENSE').read_text(encoding='utf-8')
+    assert 'GNU AFFERO GENERAL PUBLIC LICENSE' in license_text and '13. Remote Network Interaction' in license_text
+    assert (ROOT/'app/src/main/res/raw/agpl_3.txt').read_text(encoding='utf-8') == license_text
     patterns = {
         'private key': r'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----',
         'GitHub token': r'\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,})\b',
@@ -39,6 +42,10 @@ def check():
     app = manifest.find('application')
     assert app.get(android+'allowBackup') == 'false'
     assert app.get(android+'fullBackupContent') == 'false'
+    sheet = app.find("activity[@"+android+"name='.WidgetSearchActivity']")
+    assert sheet is not None and sheet.get(android+'exported') == 'false'
+    for receiver in app.findall('receiver'):
+        assert receiver.get(android+'exported') == 'false'
     service = app.find("service[@"+android+"name='.WechatSearchService']")
     assert service is not None and service.get(android+'permission') == 'android.permission.BIND_ACCESSIBILITY_SERVICE'
     config = ET.parse(ROOT/'app/src/main/res/xml/wechat_accessibility.xml').getroot()

@@ -22,6 +22,14 @@ final class AppIconView extends View {
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
+    static Bitmap render(Context context, Drawable drawable, int size) {
+        AppIconView view = new AppIconView(context, drawable);
+        view.layout(0, 0, size, size);
+        Bitmap result = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        view.draw(new Canvas(result));
+        return result;
+    }
+
     @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w <= 0 || h <= 0) return;

@@ -237,6 +237,7 @@ public class MainActivity extends Activity {
 
     private void showSettings() {
         LinearLayout body = page("设置");
+        body.addView(action("添加桌面小组件", () -> SearchWidget.add(this))); space(body, 16);
         section(body, "搜索偏好");
         SearchTarget defaultTarget = target(store.prefs.getString("default_target", ""));
         body.addView(action("默认应用  ·  " + (defaultTarget == null ? "每次选择" : defaultTarget.label), () -> {
@@ -254,7 +255,8 @@ public class MainActivity extends Activity {
         String wechatStatus = WechatSearchService.status(this);
         if (!wechatStatus.isEmpty()) body.addView(text(wechatStatus, 12, muted));
         space(body, 24); section(body, "关于一搜");
-        body.addView(text("独立开发的 Android 版本 · 0.3.7\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n豆瓣、淘宝、闲鱼通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 MIT 许可证。", 13, muted));
+        body.addView(text("独立开发的 Android 版本 · 0.4.0\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n豆瓣、淘宝、闲鱼通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 GNU AGPL 第 3 版（AGPL-3.0-only）。允许遵守许可的商用；对外分发须提供对应源码。程序不附任何担保。", 13, muted));
+        space(body, 16); body.addView(action("开源许可与源码", () -> LicenseInfo.show(this)));
         space(body, 16); body.addView(action("隐私说明", () -> new AlertDialog.Builder(this).setTitle("隐私说明").setMessage("应用不申请联网、通讯录或存储权限。微信辅助只模拟点击、长按，不读取界面控件或截图。搜索词会覆盖系统剪贴板，再粘贴到微信；不读取原剪贴板内容，结束后不清空剪贴板。保存的点击位置可在设置里清除。普通搜索最多 20 秒，首次校准最多 2 分钟，切换应用即停止。本地保存默认应用、最多 200 条搜索历史与累计次数，可关闭或清除历史。系统备份已禁用。")
                 .setPositiveButton("知道了", null).show()));
     }

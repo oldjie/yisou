@@ -19,9 +19,15 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <receiver android:name=".SearchWidget" android:exported="false">
+        <activity android:name=".WidgetSearchActivity" android:exported="false" android:theme="@style/WidgetSearchTheme"
+            android:taskAffinity="org.nofeed.android.widget" android:excludeFromRecents="true" android:launchMode="singleTop" android:windowSoftInputMode="adjustResize|stateAlwaysVisible" />
+        <receiver android:name=".SearchWidget" android:label="@string/widget_compact_name" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/search_widget" />
+        </receiver>
+        <receiver android:name=".SearchPanelWidget" android:label="@string/widget_panel_name" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/search_widget_panel" />
         </receiver>
         <service android:name=".WechatSearchService" android:label="@string/wechat_service_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="true">

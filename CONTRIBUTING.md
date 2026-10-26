@@ -6,4 +6,4 @@
 
 UI 变更请附实际安卓截图，检查小屏、键盘、字体放大、无障碍标签和横屏。保持输入、选应用、直达的简短流程，不增加推荐内容。
 
-请勿提交签名密钥、密码、令牌、个人历史或原版商业素材。源码贡献采用 MIT 许可证。兼容性问题可提交到仓库 Issues，安全问题请按 [SECURITY.md](SECURITY.md) 私密报告。提交前运行 `python scripts/security-check.py --staged`，新增公开文件须纳入经过审阅的发布白名单。
+请勿提交签名密钥、密码、令牌、个人历史或原版商业素材。当前源码贡献采用 AGPL-3.0-only，版权仍归各贡献者；详见 [LICENSING.md](LICENSING.md)，第三方材料保留原许可。兼容性问题可提交到仓库 Issues，安全问题请按 [SECURITY.md](SECURITY.md) 私密报告。提交前运行 `python scripts/security-check.py --staged`，新增公开文件须纳入经过审阅的发布白名单。

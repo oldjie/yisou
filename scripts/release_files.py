@@ -12,6 +12,7 @@ ROOT_FILES = (
     # Reviewed empty-home screenshots and a synthetic calibration fixture only.
     'docs/home-yisou-0.3.0.png', 'docs/calibration-0.3.1.png',
     'docs/home-yisou-0.3.3.png',
+    'docs/home-yisou-0.3.5.png', 'docs/icon-yisou-0.3.5.png',
     # Unmodified upstream font plus its bundled redistribution license.
     'app/src/main/res/font/noto_serif_sc_regular.otf',
     'app/src/main/res/raw/noto_serif_sc_ofl.txt',

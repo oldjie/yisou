@@ -43,8 +43,20 @@ public class MainActivity extends Activity {
     private void search() {
         setup(); EditText editor = new EditText(this); editor.setHint("搜索"); editor.setSingleLine(true);
         editor.setImeOptions(EditorInfo.IME_ACTION_SEARCH); editor.setImeActionLabel("搜索", EditorInfo.IME_ACTION_SEARCH); body.addView(editor);
+        if ("settling".equals(config.getString("scenario", "normal"))) {
+            // Reproduce a search page whose editor/selection controller is not
+            // ready as soon as the entry tap's gesture callback completes.
+            editor.setLongClickable(false);
+            handler.postDelayed(() -> editor.setLongClickable(true), 1000);
+        }
         if (!"ime".equals(config.getString("scenario", "normal"))) {
-            Button submit = new Button(this); submit.setText("搜一搜"); submit.setOnClickListener(v -> result(editor.getText().toString())); body.addView(submit);
+            Button submit = new Button(this); submit.setText("搜一搜"); submit.setEnabled(false);
+            submit.setOnClickListener(v -> result(editor.getText().toString())); body.addView(submit);
+            editor.addTextChangedListener(new android.text.TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                public void onTextChanged(CharSequence s, int start, int before, int count) { submit.setEnabled(s.length() > 0); }
+                public void afterTextChanged(android.text.Editable s) { }
+            });
         }
         editor.setOnEditorActionListener((v, action, event) -> { if (action == EditorInfo.IME_ACTION_SEARCH) { result(editor.getText().toString()); return true; } return false; });
     }

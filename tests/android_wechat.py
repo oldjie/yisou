@@ -19,7 +19,10 @@ p.add_argument('--disposable-emulator', action='store_true')
 p.add_argument('--paste-x', type=int, required=True)
 p.add_argument('--paste-y', type=int, required=True)
 p.add_argument('--reset', action='store_true', help='Clear Yisou data on this disposable emulator')
+p.add_argument('--baseline-apk', type=Path, help='Optional old APK to reproduce the premature long-press failure')
+p.add_argument('--updated-apk', type=Path, help='New APK installed over the baseline, preserving calibration')
 a = p.parse_args()
+if bool(a.baseline_apk) != bool(a.updated_apk): p.error('Supply both baseline and updated APKs, or neither')
 root = Path(__file__).resolve().parents[1]
 service = 'org.nofeed.android/.WechatSearchService'
 
@@ -69,6 +72,7 @@ previous = shell('settings','get','secure','enabled_accessibility_services')
 enabled = shell('settings','get','secure','accessibility_enabled')
 try:
     adb('install', str(root/'build/wechat-fixture/fixture.apk'))
+    if a.baseline_apk: adb('install', '-r', str(a.baseline_apk.resolve()))
     if a.reset: shell('pm','clear','org.nofeed.android')
     fixture('normal')
     open_point = center(find(desc='搜索'))
@@ -102,6 +106,17 @@ try:
     time.sleep(2)
     result(query)
     print('PASS four calibration taps, native clipboard paste and search submission',flush=True)
+    if a.baseline_apk:
+        fixture('settling'); query='旧版过早长按复现'; home(query); tap(desc='去微信搜索')
+        time.sleep(4)
+        baseline_nodes = nodes()
+        assert any(n.get('class') == 'android.widget.EditText' and n.get('text') in ('', '搜索') for n in baseline_nodes), [n.get('text') for n in baseline_nodes]
+        assert not any(n.get('text') == 'RESULT:'+query for n in baseline_nodes)
+        print('PASS baseline reproduced: editor remains empty when the paste menu was not ready',flush=True)
+        restore('enabled_accessibility_services', previous)
+        restore('accessibility_enabled', enabled)
+        adb('install', '-r', str(a.updated_apk.resolve()))
+        print('Installed update without clearing saved calibration',flush=True)
     # Restart the app/service, then replay positions without any calibration taps.
     restore('enabled_accessibility_services', previous)
     restore('accessibility_enabled', enabled)
@@ -115,12 +130,16 @@ try:
         button=center(find(desc='去微信搜索'))
         started=float(shell('cat','/proc/uptime').split()[0])*1000
         tap_xy(*button)
-        time.sleep(3)
+        time.sleep(5)
         result_nodes=nodes()
         assert any(n.get('text')=='RESULT:'+query for n in result_nodes), [n.get('text') for n in result_nodes]
         completed=next(int(n.get('text').split(':')[1]) for n in result_nodes if n.get('text','').startswith('FIXTURE_RESULT_UPTIME:'))
         timings.append(round(completed-started))
     print('PASS restart and repeated fresh keyword searches; click-to-fixture-result milliseconds: '+str(timings),flush=True)
+    fixture('settling')
+    for query in ['新词', '换一个更长的关键词 & a+b# 🐈', 'Harry Potter 2026']:
+        home(query); tap(desc='去微信搜索'); time.sleep(5); result(query)
+    print('PASS three changed keywords with delayed editor readiness and saved coordinates',flush=True)
     fixture('normal'); home('离开后不能搜索'); tap(desc='去微信搜索')
     time.sleep(.5); shell('input','keyevent','3'); time.sleep(1)
     shell('am','start','-W','-n','com.tencent.mm/fixture.MainActivity')

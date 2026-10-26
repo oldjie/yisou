@@ -31,10 +31,20 @@ public class WechatSearchService extends AccessibilityService {
     private WechatCalibration.Overlay overlay;
 
     private boolean learning() { return learnPaste || fullCalibration; }
-    private long tapDuration() { return learning() ? 70 : 35; }
+    private long tapDuration() { return learning() ? 70 : 45; }
     private long settleDelay() {
         if (learning()) return 1100;
-        return stage == 1 ? 280 : stage == 3 ? 80 : 100;
+        // Gesture completion only means the touch ended. The new page, IME and
+        // native paste toolbar can still be animating, especially on a warm
+        // second search. Keep the same separate focus/hold sequence used when
+        // learning coordinates instead of racing a 95ms combined gesture.
+        switch (stage) {
+            case 1: return 650; // Search page after opening the entry.
+            case 2: return 500; // Keyboard and editor focus after the tap.
+            case 3: return 350; // Native paste toolbar after the long press.
+            case 4: return 200; // Pasted text and keyboard search action.
+            default: return 100;
+        }
     }
 
     static boolean ready() { return connected != null; }
@@ -133,12 +143,11 @@ public class WechatSearchService extends AccessibilityService {
             case 1:
                 status("定位微信搜索输入框");
                 if (fullCalibration) pick(1);
-                else if (!learning()) focusAndHold();
                 else play(1, tapDuration(), () -> stage = 2);
                 break;
             case 2:
                 status("长按输入框，打开粘贴菜单");
-                play(1, Math.max(750, ViewConfiguration.getLongPressTimeout() + 80), () -> stage = 3);
+                play(1, Math.max(750, ViewConfiguration.getLongPressTimeout() + 120), () -> stage = 3);
                 break;
             case 3:
                 status(learnPaste ? "首次请点选粘贴菜单的位置" : "粘贴搜索词");
@@ -173,16 +182,6 @@ public class WechatSearchService extends AccessibilityService {
     private void play(int point, long duration, Runnable next) {
         Path path = new Path(); path.moveTo(points.xy[point * 2], points.xy[point * 2 + 1]);
         dispatch(new GestureDescription.Builder().addStroke(new GestureDescription.StrokeDescription(path, 0, duration)).build(), next);
-    }
-    private void focusAndHold() {
-        Path path = new Path(); path.moveTo(points.xy[2], points.xy[3]);
-        // One scheduled gesture avoids an extra callback/polling cycle while
-        // preserving the system's actual long-press threshold.
-        GestureDescription gesture = new GestureDescription.Builder()
-                .addStroke(new GestureDescription.StrokeDescription(path, 0, 35))
-                .addStroke(new GestureDescription.StrokeDescription(path, 95, ViewConfiguration.getLongPressTimeout() + 80))
-                .build();
-        dispatch(gesture, () -> stage = 3);
     }
     private void dispatch(GestureDescription gesture, Runnable next) {
         if (keyword == null) return;

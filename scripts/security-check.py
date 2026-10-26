@@ -4,6 +4,7 @@ This is a release guard, not a claim of a complete security audit. Never prints
 matching secret contents. Optional --staged checks exactly the Git index too.
 """
 import argparse
+import hashlib
 from pathlib import Path
 import re
 import subprocess
@@ -12,6 +13,8 @@ from release_files import ROOT, collect
 
 def check():
     files = collect()
+    font = (ROOT/'app/src/main/res/font/noto_serif_sc_regular.otf').read_bytes()
+    assert hashlib.sha256(font).hexdigest() == 'e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3', 'Bundled font differs from reviewed upstream binary'
     patterns = {
         'private key': r'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----',
         'GitHub token': r'\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,})\b',
@@ -23,7 +26,7 @@ def check():
     }
     failures = []
     for name in files:
-        if Path(name).suffix in {'.png', '.jar'}:
+        if Path(name).suffix in {'.png', '.jar', '.otf'}:
             continue
         source = (ROOT/name).read_text(encoding='utf-8-sig')
         for label, pattern in patterns.items():
@@ -59,7 +62,7 @@ if __name__ == '__main__':
         for name in staged:
             blob = subprocess.check_output(['git', 'show', ':'+name], cwd=ROOT)
             local = (ROOT/name).read_bytes()
-            if Path(name).suffix not in {'.png', '.jar'}:
+            if Path(name).suffix not in {'.png', '.jar', '.otf'}:
                 blob = blob.replace(b'\r\n', b'\n'); local = local.replace(b'\r\n', b'\n')
             assert blob == local, 'Index differs from reviewed file: '+name
     print(f'PASS: {len(files)} reviewed source files; credential/path scan and Android capability guards')

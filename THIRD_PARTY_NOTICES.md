@@ -1,6 +1,8 @@
 # Third-party notices
 
-The application has no third-party runtime dependencies. Android APIs and build tooling are provided by their respective projects under their own terms and are not relicensed by this repository.
+The application has no third-party runtime code dependencies. Android APIs and build tooling are provided by their respective projects under their own terms and are not relicensed by this repository.
+
+The bundled **Noto Serif SC Regular 2.003** font is copyright 2017–2024 Adobe (http://www.adobe.com/), licensed under the **SIL Open Font License 1.1**, not MIT. The unmodified font is from [notofonts/noto-cjk, commit f8d157532fbfaeda587e826d4cd5b21a49186f7c](https://github.com/notofonts/noto-cjk/blob/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/SubsetOTF/SC/NotoSerifSC-Regular.otf), SHA-256 `e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3`. The copyright notice and full license are included in both source and APK at `app/src/main/res/raw/noto_serif_sc_ofl.txt` (APK: `res/raw/noto_serif_sc_ofl.txt`). This font approximates the serif style visible in the NoFeed reference screenshots; it is not an assertion that NoFeed uses this exact font.
 
 Gradle Wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`) is from [Gradle 8.9](https://github.com/gradle/gradle/tree/v8.9.0), copyright Gradle contributors, Apache License 2.0. See [the upstream license](https://github.com/gradle/gradle/blob/v8.9.0/LICENSE) and `gradle/LICENSE-APACHE-2.0.txt`.
 

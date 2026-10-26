@@ -25,6 +25,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
     private final int paper = Color.WHITE, ink = Color.rgb(40,47,41), muted = Color.rgb(126,132,122);
     private LocalStore store;
+    private Typeface uiFont;
     private LinearLayout root, content, choices;
     private EditText query;
     private TextView searchButton, count;
@@ -33,6 +34,7 @@ public class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        uiFont = getResources().getFont(R.font.noto_serif_sc_regular);
         store = new LocalStore(this);
         // Removed preferences must not affect future launches after an upgrade.
         android.content.SharedPreferences.Editor cleanup = store.prefs.edit();
@@ -74,6 +76,7 @@ public class MainActivity extends Activity {
     }
     private TextView text(String value, float size, int color) {
         TextView view = new TextView(this); view.setText(value); view.setTextSize(size); view.setTextColor(color);
+        view.setTypeface(uiFont);
         view.setFontFeatureSettings("kern"); view.setIncludeFontPadding(false); return view;
     }
     private TextView action(String value, Runnable click) {
@@ -115,8 +118,10 @@ public class MainActivity extends Activity {
         content = column(); content.setGravity(Gravity.CENTER_VERTICAL); scroll.addView(content);
         LinearLayout field = row(); field.setBackground(background(0xFFF5F6F4, 14, 0));
         query = new EditText(this); query.setSingleLine(true); query.setTextSize(17); query.setTextColor(ink); query.setHintTextColor(0xFF999E98);
-        query.setHint("搜索…"); query.setBackgroundColor(Color.TRANSPARENT); query.setPadding(dp(16), dp(14), dp(4), dp(14));
+        query.setHint("搜索…"); query.setBackgroundColor(Color.TRANSPARENT); query.setPadding(dp(16), 0, dp(4), 0);
+        query.setGravity(Gravity.START | Gravity.CENTER_VERTICAL); query.setIncludeFontPadding(false);
         query.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        query.setTypeface(uiFont);
         query.setImeOptions(EditorInfo.IME_ACTION_SEARCH); query.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(500)});
         query.setText(draft); query.setContentDescription("搜索关键词");
         field.addView(query, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -182,7 +187,7 @@ public class MainActivity extends Activity {
 
     private LinearLayout page(String name) {
         base(name);
-        LinearLayout header = row(); TextView title = text(name, 25, ink); title.setTypeface(Typeface.create("serif", Typeface.NORMAL));
+        LinearLayout header = row(); TextView title = text(name, 25, ink);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(80), 1)); title.setGravity(Gravity.CENTER_VERTICAL);
         TextView close = action("×", this::showHome); close.setTextSize(28); close.setContentDescription("返回首页"); header.addView(close); root.addView(header);
         ScrollView scroll = new ScrollView(this); root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -226,17 +231,17 @@ public class MainActivity extends Activity {
                 store.prefs.edit().putString("default_target", which == 0 ? "" : SearchTarget.values()[which-1].name()).apply(); d.dismiss(); showSettings();
             }).show();
         }));
-        Switch history = new Switch(this); history.setText("保存本地搜索历史"); history.setTextSize(15); history.setTextColor(ink); history.setMinHeight(dp(56));
+        Switch history = new Switch(this); history.setTypeface(uiFont); history.setText("保存本地搜索历史"); history.setTextSize(15); history.setTextColor(ink); history.setMinHeight(dp(56));
         history.setChecked(store.prefs.getBoolean("save_history", true)); history.setOnCheckedChangeListener((v, checked) -> store.prefs.edit().putBoolean("save_history", checked).apply()); body.addView(history);
         body.addView(text("关闭后不再新增历史；已有记录可在历史页清空。", 12, muted)); space(body, 24);
         body.addView(action("微信搜索辅助  ·  " + (WechatSearchService.ready() ? "已开启" : "未开启"), () -> WechatSearchService.showOptions(this, draft)));
         String wechatStatus = WechatSearchService.status(this);
         if (!wechatStatus.isEmpty()) body.addView(text(wechatStatus, 12, muted));
         space(body, 24); section(body, "关于一搜");
-        body.addView(text("独立开发的 Android 版本 · 0.3.2\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n豆瓣、淘宝、闲鱼通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 MIT 许可证。", 13, muted));
+        body.addView(text("独立开发的 Android 版本 · 0.3.3\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n豆瓣、淘宝、闲鱼通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 MIT 许可证。", 13, muted));
         space(body, 16); body.addView(action("隐私说明", () -> new AlertDialog.Builder(this).setTitle("隐私说明").setMessage("应用不申请联网、通讯录或存储权限。微信辅助只模拟点击、长按，不读取界面控件或截图。搜索词会覆盖系统剪贴板，再粘贴到微信；不读取原剪贴板内容，结束后不清空剪贴板。保存的点击位置可在设置里清除。普通搜索最多 20 秒，首次校准最多 2 分钟，切换应用即停止。本地保存默认应用、最多 200 条搜索历史与累计次数，可关闭或清除历史。系统备份已禁用。")
                 .setPositiveButton("知道了", null).show()));
     }
-    private void section(LinearLayout body, String label) { TextView title = text(label, 17, ink); title.setTypeface(Typeface.DEFAULT, Typeface.BOLD); body.addView(title); space(body, 10); }
+    private void section(LinearLayout body, String label) { TextView title = text(label, 17, ink); title.setTypeface(uiFont, Typeface.BOLD); body.addView(title); space(body, 10); }
     @Override public void onBackPressed() { if (!"home".equals(screen)) showHome(); else super.onBackPressed(); }
 }

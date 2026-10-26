@@ -8,7 +8,9 @@
 
 ## 安装与使用
 
-当前开发预览版：0.3.2（Android 8.0 / API 26 及以上，通用架构）。公开预览包见 [Releases](https://github.com/oldjie/yisou/releases)；本地直接构建产物为 `dist/yisou-0.3.2.apk`。复制到手机，使用系统文件管理器打开安装。系统可能要求允许该文件管理器安装应用。
+当前开发预览版：0.3.3（Android 8.0 / API 26 及以上，通用架构）。公开预览包见 [Releases](https://github.com/oldjie/yisou/releases)；本地直接构建产物为 `dist/yisou-0.3.3.apk`。复制到手机，使用系统文件管理器打开安装。系统可能要求允许该文件管理器安装应用。
+
+0.3.3 参照原版截图的宋体风格，内置 Noto Serif SC Regular，统一首页、输入框、历史、设置与小组件的字体，避免不同手机回退为系统黑体。字体采用 SIL OFL 1.1 授权，来源和许可见 [第三方声明](THIRD_PARTY_NOTICES.md)；未确认原作者使用的具体字体名称。
 
 1. 输入关键词。
 2. 点击豆瓣、淘宝、闲鱼或微信图标；右侧“更多”中点击应用名称也能选择。
@@ -29,7 +31,7 @@
 0.3.2 已删除应用别名和自定义搜索链接功能，旧版本这两类偏好会在升级后清理。应用显示名称和图标已更换；内部包名仍保留 org.nofeed.android，用于兼容覆盖升级和已有历史记录。
 
 <p align="center">
-  <img src="docs/home-yisou-0.3.0.png" alt="一搜 Android 首页：关键词输入框与应用选择图标" width="260">
+  <img src="docs/home-yisou-0.3.3.png" alt="一搜 Android 首页：宋体关键词输入框与应用选择图标" width="260">
 </p>
 
 ## 构建

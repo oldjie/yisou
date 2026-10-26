@@ -79,9 +79,10 @@ final class WechatCalibration {
             int pad = (int)(16 * service.getResources().getDisplayMetrics().density);
             panel.setPadding(pad, pad, pad, pad); panel.setBackgroundColor(0xFFFFFFFF); panel.setClickable(true);
             TextView prompt = new TextView(service); prompt.setTextColor(0xFF202520); prompt.setTextSize(17);
+            prompt.setTypeface(service.getResources().getFont(R.font.noto_serif_sc_regular));
             prompt.setText(step + "/4 · " + (step == 1 ? "点一下微信的搜索图标" : step == 2 ? "点一下搜索输入框" : step == 3 ? "点一下弹出菜单中的‘粘贴’" : "点一下键盘的‘搜索’键") + "\n这次点击会保存并立即执行。");
             panel.addView(prompt);
-            Button stop = new Button(service); stop.setText("取消校准"); stop.setOnClickListener(v -> cancel.run()); panel.addView(stop);
+            Button stop = new Button(service); stop.setTypeface(service.getResources().getFont(R.font.noto_serif_sc_regular)); stop.setText("取消校准"); stop.setOnClickListener(v -> cancel.run()); panel.addView(stop);
             FrameLayout.LayoutParams box = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
             box.setMargins(pad, 0, pad, pad * 4); view.addView(panel, box);
             view.setOnTouchListener((v, event) -> {

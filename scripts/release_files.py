@@ -9,8 +9,12 @@ ROOT_FILES = (
     'gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar',
     'gradle/LICENSE-APACHE-2.0.txt', 'docs/RESEARCH.md', 'docs/TESTING.md',
     'docs/SECURITY_REVIEW.md',
-    # Only these two images were reviewed: an empty home and a synthetic fixture.
+    # Reviewed empty-home screenshots and a synthetic calibration fixture only.
     'docs/home-yisou-0.3.0.png', 'docs/calibration-0.3.1.png',
+    'docs/home-yisou-0.3.3.png',
+    # Unmodified upstream font plus its bundled redistribution license.
+    'app/src/main/res/font/noto_serif_sc_regular.otf',
+    'app/src/main/res/raw/noto_serif_sc_ofl.txt',
 )
 SOURCE_DIRS = {
     'app/src': {'.java', '.xml'},
@@ -24,6 +28,8 @@ def collect():
     for folder, suffixes in SOURCE_DIRS.items():
         for path in (ROOT / folder).rglob('*'):
             if '__pycache__' in path.parts or not path.is_file():
+                continue
+            if path.relative_to(ROOT).as_posix() in selected:
                 continue
             if path.suffix not in suffixes:
                 raise ValueError('Unreviewed source file: ' + str(path.relative_to(ROOT)))

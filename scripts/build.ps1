@@ -31,7 +31,7 @@ Invoke-Checked "$tools/aapt2.exe" @('compile', '--dir', "$projectRoot/app/src/ma
 [xml]$manifest = Get-Content -LiteralPath "$projectRoot/app/src/main/AndroidManifest.xml" -Raw -Encoding UTF8
 $manifest.DocumentElement.SetAttribute('package', 'org.nofeed.android')
 $manifest.Save("$build/AndroidManifest.xml")
-Invoke-Checked "$tools/aapt2.exe" @('link', '-o', "$build/base.apk", '-I', $platform, '--manifest', "$build/AndroidManifest.xml", '--java', "$build/generated", '--min-sdk-version', '26', '--target-sdk-version', '35', '--version-code', '11', '--version-name', '0.4.0', "$build/resources.zip")
+Invoke-Checked "$tools/aapt2.exe" @('link', '-o', "$build/base.apk", '-I', $platform, '--manifest', "$build/AndroidManifest.xml", '--java', "$build/generated", '--min-sdk-version', '26', '--target-sdk-version', '35', '--version-code', '12', '--version-name', '0.5.0', "$build/resources.zip")
 $sources = @(Get-ChildItem "$projectRoot/app/src/main/java", "$build/generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
 Invoke-Checked $javac (@('-encoding', 'UTF-8', '-source', '8', '-target', '8', '-bootclasspath', "$platform;$tools/core-lambda-stubs.jar", '-d', "$build/classes") + $sources)
 $classes = @(Get-ChildItem "$build/classes" -Recurse -Filter '*.class' | ForEach-Object FullName)
@@ -46,8 +46,8 @@ if (-not (Test-Path $key)) {
     New-Item -ItemType Directory -Force "$projectRoot/.tools" | Out-Null
     Invoke-Checked $keytool @('-genkeypair', '-keystore', $key, '-storepass', 'android', '-alias', 'development', '-keypass', 'android', '-dname', 'CN=NoFeed Development', '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000')
 }
-$apk = "$dist/yisou-0.4.0.apk"
+$apk = "$dist/yisou-0.5.0.apk"
 Invoke-Checked $java @('-jar', "$tools/lib/apksigner.jar", 'sign', '--ks', $key, '--ks-pass', 'pass:android', '--ks-key-alias', 'development', '--out', $apk, "$build/aligned.apk")
 Invoke-Checked $java @('-jar', "$tools/lib/apksigner.jar", 'verify', '--verbose', $apk)
-Get-FileHash -Algorithm SHA256 $apk | ForEach-Object { "$($_.Hash.ToLower())  yisou-0.4.0.apk" } | Set-Content "$dist/SHA256SUMS.txt"
+Get-FileHash -Algorithm SHA256 $apk | ForEach-Object { "$($_.Hash.ToLower())  yisou-0.5.0.apk" } | Set-Content "$dist/SHA256SUMS.txt"
 Write-Output "APK: $apk"

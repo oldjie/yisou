@@ -49,3 +49,28 @@
 应用在前台把本次关键词写入系统剪贴板，之后打开微信、点击搜索和输入框、长按呼出粘贴菜单、点击已保存的粘贴位置、点击键盘搜索键。保存的屏幕与应用配置用于失效检查；任务只检查窗口所属应用以判断是否离开，不获取内容树、不做图像识别。用户的微信截图没有复制入项目，也不进入开源包。
 
 系统设置跳转改用公开的 ACTION_ACCESSIBILITY_SETTINGS，失败再尝试 ACTION_SETTINGS，均捕获启动异常，最后显示应用内指引。没有用户手机的崩溃日志，不能将旧详情设置入口认定为已确认的崩溃原因。
+
+
+## 2026-10-27：新增三个原版平台
+
+应用宝当天渠道版本（不宣称所有渠道同时最新），下载 MD5 与商店元数据匹配、apksigner 验证成功；原版 APK 只放忽略的本地调研缓存，不纳入仓库、源码包或一搜 APK。
+
+| 平台/版本 | 包名 | 客户端入口 | 运行边界 |
+| --- | --- | --- | --- |
+| 哔哩哔哩 9.16.1 | tv.danmaku.bili | bilibili://search?keyword={query} | 原版 IntentHandlerActivity 公开接收；模拟器首次同意后无响应，未确认结果 |
+| 拼多多 8.28.0 | com.xunmeng.pinduoduo | pinduoduo://com.xunmeng.pinduoduo/search_result.html?search_key={query} | 原版 MainFrameActivity 接收，实际出现关键词搜索头后要求登录 |
+| 小红书 9.52.0 | com.xingin.xhs | xhsdiscover://search/result?keyword={query} | RouterPageActivity 公开接收；原版普通启动及路由在模拟器退出，未确认结果 |
+
+关键词均一次 UTF-8 percent encoding，并由 Intent 限定包名。原有淘宝嵌套 URL 的两层编码保持不变。没有尝试启动私有结果 Activity。
+
+来源：[哔哩哔哩商店](https://sj.qq.com/appdetail/tv.danmaku.bili)、[拼多多商店](https://sj.qq.com/appdetail/com.xunmeng.pinduoduo)、[小红书商店](https://sj.qq.com/appdetail/com.xingin.xhs)。小红书的[官方协议](https://pages.xiaohongshu.com/activity/deeplink)明确列出 /search/result 与必需 keyword。
+
+有界静态核对：BiliMainSearchActivity.O8 从 URI 读取 keyword，非空时进入搜索结果分支；rx0.e.f 匹配 bilibili scheme 和 search/search3 host。小红书 GlobalSearchActivity 注册 /search/result，Mapping.parseExtras 将 query 写入 Bundle，Routers.doOpen 转入目标 Intent，搜索参数 j80.c.n 读取 keyword Extra。未穷举小红书新组件路由的每个分支，不能据此宣称运行时一定命中旧路由。REA Android 工具缺少独立 JADX MCP JAR，因此这些证据来自现有 AAPT2、DEX 定位和 JADX CLI 1.5.0；未修改 REA 或客户端配置。
+
+原版 APK SHA-256：
+
+- 哔哩哔哩：ad073a3e01e26c336b7e65181f6acb40e920698bb40fb15ee35e03ff6fb02799
+- 拼多多：25bb13c6fad8336febf3c43e78c07b352d85b3f7fe86da6b8e82ab5360cef5ce
+- 小红书：510ee7bc44620144d91bd0f8f52642b12d4e4b57dc9c8d3e1e71385856357226
+
+原版自身在模拟器的异常不等同于一搜路由失败，也不证明手机可以成功，最终仍需已安装、已完成首次提示及必要登录的真实手机复测。未登录任何账号、未购买或执行社交操作。

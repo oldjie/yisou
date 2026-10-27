@@ -15,7 +15,7 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
     AppWidgetHost host;
     AppWidgetManager manager;
-    int compactHeight = 80;
+    int compactHeight = 70, widgetWidth = 300;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); host = new AppWidgetHost(this, 4040); manager = AppWidgetManager.getInstance(this); render(getIntent());
     }
@@ -24,11 +24,13 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); render(intent); }
     int dp(int n) { return Math.round(n * getResources().getDisplayMetrics().density); }
     void render(Intent intent) {
-        if (intent.hasExtra("compact_height")) compactHeight = intent.getIntExtra("compact_height", 80);
+        if (intent.hasExtra("compact_height")) compactHeight = intent.getIntExtra("compact_height", 70);
+        widgetWidth = intent.getIntExtra("widget_width", 300);
+        org.nofeed.android.IconProbe.verify(this);
         LinearLayout root = new LinearLayout(this); root.setOrientation(1); root.setPadding(dp(16), dp(30), dp(16), dp(12)); root.setBackgroundColor(0xFFE3E7DF);
         TextView title = new TextView(this); title.setText("Android 系统小组件测试宿主\n非华为/小米桌面实机"); title.setTextSize(16); root.addView(title);
         add(root, "SearchWidget", compactHeight, "4×1 快捷搜索");
-        add(root, "SearchPanelWidget", 156, "4×2 搜索面板");
+        TextView status = new TextView(this); status.setText("标准图标 / OEM 自适应包装图标：回归通过"); status.setTextSize(11); root.addView(status);
         setContentView(root);
     }
     void add(LinearLayout root, String cls, int height, String label) {
@@ -37,7 +39,7 @@ public class MainActivity extends Activity {
         int id = prefs.getInt(cls, -1);
         ComponentName provider = new ComponentName("org.nofeed.android", "org.nofeed.android." + cls);
         Bundle options = new Bundle();
-        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 300); options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 300);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widgetWidth); options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widgetWidth);
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, height); options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height);
         if (id < 0) {
             id = host.allocateAppWidgetId();
@@ -45,6 +47,6 @@ public class MainActivity extends Activity {
             prefs.edit().putInt(cls, id).apply();
         } else manager.updateAppWidgetOptions(id, options);
         AppWidgetHostView view = host.createView(this, id, manager.getAppWidgetInfo(id));
-        root.addView(view, new LinearLayout.LayoutParams(-1, dp(height)));
+        root.addView(view, new LinearLayout.LayoutParams(dp(widgetWidth + 16), dp(height)));
     }
 }

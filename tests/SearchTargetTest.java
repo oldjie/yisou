@@ -4,6 +4,7 @@ package org.nofeed.android;
 public class SearchTargetTest {
     private static void check(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
     public static void main(String[] args) {
+        check(SearchTarget.values().length == 7, "Seven supported targets");
         for (SearchTarget t : SearchTarget.values()) {
             if (t == SearchTarget.WECHAT) { check(t.appTemplate == null && t.webTemplate == null, "WeChat must use client automation, never a fake URI or web fallback"); continue; }
             String app = SearchTarget.buildUrl(t.appTemplate, "  三体 & a+b?#/ 🎈  ");
@@ -24,7 +25,10 @@ public class SearchTargetTest {
         check(SearchTarget.DOUBAN.appTemplate.contains("/search/result?"), "Douban must open results instead of search input");
         check(SearchTarget.XIANYU.appTemplate.contains("initSubPageTag=searchResult"), "Xianyu must select result subpage");
         check(SearchTarget.TAOBAO.appTemplate.startsWith("tbopen://m.taobao.com/tbopen/"), "Taobao must use public gateway instead of private result activity");
-        System.out.println("SearchTarget tests passed (3 adapters, Unicode, special characters, validation).");
+        check(SearchTarget.BILIBILI.appTemplate.startsWith("bilibili://search?keyword="), "Bilibili native search");
+        check(SearchTarget.PINDUODUO.appTemplate.contains("/search_result.html?search_key="), "Pinduoduo results route");
+        check(SearchTarget.XIAOHONGSHU.appTemplate.startsWith("xhsdiscover://search/result?keyword="), "Xiaohongshu results route");
+        System.out.println("SearchTarget tests passed (6 URI adapters + WeChat, Unicode, special characters, validation).");
     }
     private static String decode(String value) {
         try { return java.net.URLDecoder.decode(value, "UTF-8"); }

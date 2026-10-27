@@ -44,6 +44,9 @@ def check():
     assert app.get(android+'fullBackupContent') == 'false'
     sheet = app.find("activity[@"+android+"name='.WidgetSearchActivity']")
     assert sheet is not None and sheet.get(android+'exported') == 'false'
+    adapter = app.find("service[@"+android+"name='.WidgetAppsService']")
+    assert adapter is not None and adapter.get(android+'permission') == 'android.permission.BIND_REMOTEVIEWS'
+    assert adapter.get(android+'exported') == 'false'
     for receiver in app.findall('receiver'):
         assert receiver.get(android+'exported') == 'false'
     service = app.find("service[@"+android+"name='.WechatSearchService']")

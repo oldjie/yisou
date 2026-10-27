@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Shader;
+import android.graphics.Rect;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -46,14 +47,26 @@ final class AppIconView extends View {
         mask.close();
         Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas target = new Canvas(bitmap); icon.setBounds(0, 0, w, h);
-        if (icon instanceof AdaptiveIconDrawable) {
-            // Preserve the adaptive layers' bounds but apply our own mask once,
-            // avoiding a circle nested inside the rounded square.
+        if (icon.getClass() == AdaptiveIconDrawable.class) {
+            // Preserve Android's expanded adaptive bounds so the artwork keeps
+            // its launcher scale. Repair an empty layer without shrinking the
+            // foreground into its resource's safe-zone a second time.
             AdaptiveIconDrawable adaptive = (AdaptiveIconDrawable)icon;
-            if (adaptive.getBackground() != null) adaptive.getBackground().draw(target);
-            if (adaptive.getForeground() != null) adaptive.getForeground().draw(target);
-        } else icon.draw(target);
+            drawLayer(adaptive.getBackground(), target, w, h);
+            drawLayer(adaptive.getForeground(), target, w, h);
+        } else {
+            // OEM subclasses may draw themed artwork in their own draw()
+            // rather than in the public foreground/background layers.
+            icon.draw(target);
+        }
         paint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+    }
+
+    private static void drawLayer(Drawable layer, Canvas canvas, int w, int h) {
+        if (layer == null) return;
+        Rect previous = new Rect(layer.getBounds());
+        if (previous.isEmpty()) layer.setBounds(0, 0, w, h);
+        layer.draw(canvas); layer.setBounds(previous);
     }
 
     @Override protected void onDraw(Canvas canvas) {

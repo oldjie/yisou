@@ -16,6 +16,8 @@ ROOT_FILES = (
     'docs/home-yisou-0.3.6.png', 'docs/icon-yisou-0.3.6.png',
     'docs/home-yisou-0.3.7.png',
     'docs/widgets-yisou-0.4.0.png',
+    'docs/home-yisou-0.5.0.png', 'docs/settings-yisou-0.5.0.png',
+    'docs/widget-yisou-0.5.0.png', 'docs/widget-yisou-0.5.0-scrolled.png',
     # Unmodified upstream font plus its bundled redistribution license.
     'app/src/main/res/font/noto_serif_sc_regular.otf',
     'app/src/main/res/raw/noto_serif_sc_ofl.txt',

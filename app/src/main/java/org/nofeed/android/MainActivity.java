@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -66,6 +65,7 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); setIntent(intent); consumeIntent(intent); showHome(); }
     @Override protected void onResume() {
         super.onResume();
+        SearchWidget.refresh();
         if ("settings".equals(screen)) showSettings();
         else if ("home".equals(screen) && choices != null) renderChoices();
     }
@@ -114,9 +114,9 @@ public class MainActivity extends Activity {
         TextView logo = text("一搜", 17, ink); logo.setLetterSpacing(.02f); logo.setGravity(Gravity.CENTER_VERTICAL);
         header.addView(logo, new LinearLayout.LayoutParams(0, dp(64), 1));
         TextView history = action("历史", () -> { captureDraft(); showHistory(); });
-        history.setTextSize(12); history.setTextColor(muted); history.setContentDescription("搜索历史"); header.addView(history);
+        history.setTextSize(14); history.setTextColor(muted); history.setContentDescription("搜索历史"); header.addView(history);
         TextView settings = action("设置", () -> { captureDraft(); showSettings(); });
-        settings.setTextSize(12); settings.setTextColor(muted); settings.setContentDescription("设置"); header.addView(settings);
+        settings.setTextSize(14); settings.setTextColor(muted); settings.setContentDescription("设置"); header.addView(settings);
         root.addView(header);
 
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
@@ -147,7 +147,8 @@ public class MainActivity extends Activity {
             return false;
         });
         space(content, 18);
-        LinearLayout appRow = row(); appScroller = new HorizontalScrollView(this); appScroller.setHorizontalScrollBarEnabled(false);
+        LinearLayout appRow = row(); appScroller = new HorizontalScrollView(this); appScroller.setHorizontalScrollBarEnabled(false); appScroller.setHorizontalFadingEdgeEnabled(false);
+        appScroller.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> { if (r-l != or-ol) renderChoices(); });
         choices = row(); appScroller.addView(choices); appRow.addView(appScroller, new LinearLayout.LayoutParams(0, dp(88), 1));
         appRow.addView(moreChoice(), new LinearLayout.LayoutParams(dp(54), dp(84))); content.addView(appRow); renderChoices(); updateButton();
         space(content, 80);
@@ -155,20 +156,21 @@ public class MainActivity extends Activity {
 
     private void renderChoices() {
         choices.removeAllViews();
-        for (SearchTarget t : SearchTarget.values()) {
+        int available = appScroller.getWidth() > 0 ? appScroller.getWidth() : getResources().getDisplayMetrics().widthPixels - dp(106);
+        int itemWidth = Math.max(1, (int)(available / 4.5f));
+        for (SearchTarget t : AppCatalog.ordered(this)) {
             LinearLayout item = column(); item.setGravity(Gravity.CENTER); item.setPadding(dp(2), dp(6), dp(2), dp(6));
-            Drawable appIcon = installedIcon(t);
-            AppIconView icon = new AppIconView(this, appIcon != null ? appIcon : getDrawable(R.drawable.ic_app_unavailable));
-            item.addView(icon, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            boolean installed = AppCatalog.installed(this, t);
+            AppIconView icon = new AppIconView(this, AppCatalog.icon(this, t));
+            int iconSize = Math.min(dp(44), Math.max(dp(24), itemWidth-dp(8)));
+            item.addView(icon, new LinearLayout.LayoutParams(iconSize, iconSize));
             space(item, 7); item.addView(appLabel(t.label, selected == t ? ink : muted));
-            item.setTooltipText(t.label + (appIcon == null ? "（未安装）" : ""));
+            item.setTooltipText(t.label + (!installed ? "（未安装）" : ""));
             if (selected == t) item.setBackground(background(0xFFF0F2ED, 14, 0));
             item.setContentDescription(t.label + (selected == t ? "，已选择" : "，点击选择")); item.setSelected(selected == t); item.setFocusable(true);
             item.setOnClickListener(v -> { selected = t; renderChoices(); updateButton(); });
-            choices.addView(item, new LinearLayout.LayoutParams(dp(62), dp(84)));
+            choices.addView(item, new LinearLayout.LayoutParams(itemWidth, dp(84)));
         }
-        if (selected != null && appScroller != null) appScroller.post(() ->
-                appScroller.smoothScrollTo(Math.max(0, dp(selected.ordinal() * 62) - appScroller.getWidth() / 2 + dp(31)), 0));
     }
     private View moreChoice() {
         LinearLayout more = column(); more.setGravity(Gravity.CENTER);
@@ -185,12 +187,6 @@ public class MainActivity extends Activity {
         label.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         return label;
     }
-    private Drawable installedIcon(SearchTarget target) {
-        // Read only the declared target packages locally; no package-list scan,
-        // icon download or copied third-party artwork is needed.
-        try { return getPackageManager().getApplicationIcon(target.packageName); }
-        catch (android.content.pm.PackageManager.NameNotFoundException | RuntimeException unavailable) { return null; }
-    }
     private void updateButton() { if (searchButton != null) searchButton.setContentDescription(selected == null ? "搜索" : "去" + selected.label + "搜索"); }
     private void updateCount() { if (count != null) count.setText(getString(R.string.search_count, store.prefs.getLong("count", 0))); }
     private void submit() {
@@ -201,11 +197,14 @@ public class MainActivity extends Activity {
         SearchLauncher.launch(this, store, selected, value, this::updateCount);
     }
     private void moreTargets() {
-        String[] names = new String[SearchTarget.values().length];
-        for (SearchTarget t : SearchTarget.values()) names[t.ordinal()] = t.label;
-        new AlertDialog.Builder(this).setTitle("选择应用").setItems(names, (dialog, which) -> {
-            selected = SearchTarget.values()[which]; renderChoices(); updateButton();
-        }).setNegativeButton("取消", null).show();
+        AppPickerDialog.show(this, selected, target -> {
+            selected = target; renderChoices(); updateButton();
+            appScroller.post(() -> {
+                int index = AppCatalog.ordered(this).indexOf(selected);
+                int width = choices.getChildCount() == 0 ? 0 : choices.getChildAt(0).getWidth();
+                appScroller.smoothScrollTo(Math.max(0, index*width-appScroller.getWidth()/2+width/2), 0);
+            });
+        }, () -> { renderChoices(); appScroller.scrollTo(0,0); });
     }
 
     private LinearLayout page(String name) {
@@ -255,11 +254,12 @@ public class MainActivity extends Activity {
         section(body, "搜索偏好");
         SearchTarget defaultTarget = target(store.prefs.getString("default_target", ""));
         body.addView(settingAction("默认应用  ·  " + (defaultTarget == null ? "每次选择" : defaultTarget.label), () -> {
-            String[] options = new String[SearchTarget.values().length + 1];
+            java.util.List<SearchTarget> order = AppCatalog.ordered(this);
+            String[] options = new String[order.size() + 1];
             options[0] = "每次选择";
-            for (SearchTarget t : SearchTarget.values()) options[t.ordinal() + 1] = t.label;
-            new AlertDialog.Builder(this).setTitle("默认应用").setSingleChoiceItems(options, defaultTarget == null ? 0 : defaultTarget.ordinal() + 1, (d, which) -> {
-                store.prefs.edit().putString("default_target", which == 0 ? "" : SearchTarget.values()[which-1].name()).apply(); d.dismiss(); showSettings();
+            for (int i=0; i<order.size(); i++) options[i+1] = order.get(i).label;
+            new AlertDialog.Builder(this).setTitle("默认应用").setSingleChoiceItems(options, defaultTarget == null ? 0 : order.indexOf(defaultTarget) + 1, (d, which) -> {
+                store.prefs.edit().putString("default_target", which == 0 ? "" : order.get(which-1).name()).apply(); d.dismiss(); showSettings();
             }).show();
         }));
         Switch history = new Switch(this); history.setTypeface(uiFont); history.setText("保存本地搜索历史"); history.setTextSize(15); history.setTextColor(ink); history.setMinHeight(dp(56)); history.setPadding(dp(12), dp(8), dp(12), dp(8)); history.setBackground(background(0xFFF5F6F4, 14, 0xFFE1E5DC));
@@ -269,7 +269,7 @@ public class MainActivity extends Activity {
         String wechatStatus = WechatSearchService.status(this);
         if (!wechatStatus.isEmpty()) body.addView(text(wechatStatus, 12, muted));
         space(body, 24); section(body, "关于一搜");
-        body.addView(text("独立开发的 Android 版本 · 0.5.0\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n除微信外的六个平台通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 GNU AGPL 第 3 版（AGPL-3.0-only）。允许遵守许可的商用；对外分发须提供对应源码。程序不附任何担保。", 13, muted));
+        body.addView(text("独立开发的 Android 版本 · 0.6.0\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n除微信外的六个平台通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 GNU AGPL 第 3 版（AGPL-3.0-only）。允许遵守许可的商用；对外分发须提供对应源码。程序不附任何担保。", 13, muted));
         space(body, 16); body.addView(settingAction("开源许可与源码", () -> LicenseInfo.show(this)));
         space(body, 16); body.addView(settingAction("隐私说明", () -> new AlertDialog.Builder(this).setTitle("隐私说明").setMessage("应用不申请联网、通讯录或存储权限。微信辅助只模拟点击、长按，不读取界面控件或截图。搜索词会覆盖系统剪贴板，再粘贴到微信；不读取原剪贴板内容，结束后不清空剪贴板。保存的点击位置可在设置里清除。普通搜索最多 20 秒，首次校准最多 2 分钟，切换应用即停止。本地保存默认应用、最多 200 条搜索历史与累计次数，可关闭或清除历史。系统备份已禁用。")
                 .setPositiveButton("知道了", null).show()));

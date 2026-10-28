@@ -43,7 +43,7 @@ public class SearchWidget extends AppWidgetProvider {
                 view.setViewLayoutHeight(R.id.widget_apps, Math.max(120, width - 100), TypedValue.COMPLEX_UNIT_DIP);
                 RemoteViews.RemoteCollectionItems.Builder items = new RemoteViews.RemoteCollectionItems.Builder()
                         .setHasStableIds(true).setViewTypeCount(1);
-                for (SearchTarget target : SearchTarget.values()) items.addItem(target.ordinal(), icon(context, target));
+                for (SearchTarget target : AppCatalog.ordered(context)) items.addItem(target.ordinal(), icon(context, target));
                 view.setRemoteAdapter(R.id.widget_apps, items.build());
             } else {
                 // Older systems keep a narrow 120dp viewport, still scrollable.
@@ -55,6 +55,8 @@ public class SearchWidget extends AppWidgetProvider {
             Intent advance = new Intent(context, SearchWidget.class).setAction(context.getPackageName()+".WIDGET_PAGE")
                     .setData(Uri.parse("yisou://widget/"+id+"/page")).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id);
             view.setOnClickPendingIntent(R.id.widget_next, PendingIntent.getBroadcast(context, 0, advance, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            view.setScrollPosition(R.id.widget_apps, 0);
+            context.getSharedPreferences("widget_ui", Context.MODE_PRIVATE).edit().putBoolean("end_"+id, false).apply();
             manager.updateAppWidget(id, view);
             if (Build.VERSION.SDK_INT < 31) manager.notifyAppWidgetViewDataChanged(id, R.id.widget_apps);
         }
@@ -80,9 +82,7 @@ public class SearchWidget extends AppWidgetProvider {
         for (int id : ids) edit.remove("end_"+id); edit.apply();
     }
     static RemoteViews icon(Context context, SearchTarget target) {
-        android.graphics.drawable.Drawable artwork;
-        try { artwork = context.getPackageManager().getApplicationIcon(target.packageName); }
-        catch (android.content.pm.PackageManager.NameNotFoundException | RuntimeException unavailable) { artwork = context.getDrawable(R.drawable.ic_app_unavailable); }
+        android.graphics.drawable.Drawable artwork = AppCatalog.icon(context, target);
         int size = Math.min(160, Math.round(28 * context.getResources().getDisplayMetrics().density));
         RemoteViews item = new RemoteViews(context.getPackageName(), R.layout.widget_app_item);
         item.setImageViewBitmap(R.id.widget_app_icon, AppIconView.render(context, artwork, size));

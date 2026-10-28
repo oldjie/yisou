@@ -15,6 +15,9 @@ def check():
     files = collect()
     font = (ROOT/'app/src/main/res/font/noto_serif_sc_regular.otf').read_bytes()
     assert hashlib.sha256(font).hexdigest() == 'e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3', 'Bundled font differs from reviewed upstream binary'
+    icon_hashes = {'platform_douban.png': '873fedebaf8cdc832f4eb70d3f500d397fa5b6236ac20679dc39a936b9b77fc0', 'platform_taobao.png': 'e8bab27669864624f6714ebd2a9c406f6c6cddb350b85845292794cdd6549f61', 'platform_xianyu.png': 'c736e422845c495406d33375a4248c5bb12d91cffac90cf5a5eeed5c3c7e6ecd', 'platform_wechat.png': '63b3e7dd50d8e08308e1b19257ca527ebeeb97f3fce67f86549acd2d7966914a', 'platform_bilibili.png': 'd210b88eccad05224e09022a6d9f3eb5b67f65789f35e3e92d4d610ed2b86dc4', 'platform_pinduoduo.png': '125020950c137239022a4e369ce11cc859898ffaceef559656acd8b766ff191a', 'platform_xiaohongshu.png': '45a48b9c69de013fa1bad5e3bf36a55593061dbf57c9c030094435df2ca5bbdb'}
+    for name, digest in icon_hashes.items():
+        assert hashlib.sha256((ROOT/"app/src/main/res/drawable-nodpi"/name).read_bytes()).hexdigest() == digest, "Bundled platform icon differs from reviewed asset: "+name
     license_text = (ROOT/'LICENSE').read_text(encoding='utf-8')
     assert 'GNU AFFERO GENERAL PUBLIC LICENSE' in license_text and '13. Remote Network Interaction' in license_text
     assert (ROOT/'app/src/main/res/raw/agpl_3.txt').read_text(encoding='utf-8') == license_text

@@ -9,16 +9,17 @@ import android.widget.RemoteViewsService;
 public final class WidgetAppsService extends RemoteViewsService {
     @Override public RemoteViewsFactory onGetViewFactory(Intent intent) {
         return new RemoteViewsFactory() {
+            private java.util.List<SearchTarget> order = AppCatalog.ordered(WidgetAppsService.this);
             public void onCreate() { }
-            public void onDataSetChanged() { }
+            public void onDataSetChanged() { order = AppCatalog.ordered(WidgetAppsService.this); }
             public void onDestroy() { }
-            public int getCount() { return SearchTarget.values().length; }
+            public int getCount() { return order.size(); }
             public RemoteViews getViewAt(int position) {
-                return position >= 0 && position < getCount() ? SearchWidget.icon(WidgetAppsService.this, SearchTarget.values()[position]) : null;
+                return position >= 0 && position < getCount() ? SearchWidget.icon(WidgetAppsService.this, order.get(position)) : null;
             }
             public RemoteViews getLoadingView() { return null; }
             public int getViewTypeCount() { return 1; }
-            public long getItemId(int position) { return position; }
+            public long getItemId(int position) { return order.get(position).ordinal(); }
             public boolean hasStableIds() { return true; }
         };
     }

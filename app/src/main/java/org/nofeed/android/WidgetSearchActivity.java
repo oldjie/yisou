@@ -55,8 +55,6 @@ public class WidgetSearchActivity extends Activity {
         field.addView(query, new LinearLayout.LayoutParams(0, dp(56), 1));
         TextView go = label("→", 25); go.setGravity(Gravity.CENTER); go.setContentDescription("提交快捷搜索"); go.setOnClickListener(v -> submit());
         field.addView(go, new LinearLayout.LayoutParams(dp(52), dp(56))); root.addView(field);
-        TextView legal = label("源码与许可", 11); legal.setTextColor(0xFF747C70); legal.setGravity(Gravity.CENTER);
-        legal.setMinHeight(dp(36)); legal.setOnClickListener(v -> LicenseInfo.show(this)); root.addView(legal);
         setContentView(root); getWindow().setLayout(-1, -2);
         query.requestFocus(); query.postDelayed(() -> ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(query, InputMethodManager.SHOW_IMPLICIT), 160);
     }
@@ -68,10 +66,11 @@ public class WidgetSearchActivity extends Activity {
     private SearchTarget parse(String name) { try { return SearchTarget.valueOf(name); } catch (Exception ignored) { return null; } }
     private void updatePlatform() { platform.setText(selected == null ? "选择搜索应用 ▾" : selected.label + " ▾"); }
     private void choose(boolean submitAfterSelection) {
-        String[] names = new String[SearchTarget.values().length];
-        for (SearchTarget t : SearchTarget.values()) names[t.ordinal()] = t.label;
+        java.util.List<SearchTarget> order = AppCatalog.ordered(this);
+        String[] names = new String[order.size()];
+        for (int i=0; i<order.size(); i++) names[i] = order.get(i).label;
         new AlertDialog.Builder(this).setTitle("选择应用").setItems(names, (d, which) -> {
-            selected = SearchTarget.values()[which]; updatePlatform(); if (submitAfterSelection) submit();
+            selected = order.get(which); updatePlatform(); if (submitAfterSelection) submit();
         }).show();
     }
     private void submit() {

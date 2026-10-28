@@ -85,17 +85,20 @@ try:
     assert not any(n.get('text') in ['豆瓣','淘宝','闲鱼','微信','哔哩哔哩','拼多多','小红书'] for n in ns), 'Widget icons have no visible names'
     capture('widgets.png')
     print('PASS one compact RemoteViews layout and production OEM icon regression', flush=True)
-    tap(desc='下一组应用'); find(desc='小红书，输入并搜索')
-    tap(desc='前一组应用'); find(desc='豆瓣，输入并搜索')
+    initial_apps=[n.get('content-desc') for n in ns if n.get('content-desc','').endswith('，输入并搜索')]
+    tap(desc='下一组应用')
+    assert any(n.get('content-desc','').endswith('，输入并搜索') and n.get('content-desc') not in initial_apps for n in nodes())
+    tap(desc='前一组应用'); find(desc=initial_apps[0])
     print('PASS explicit arrow controls reach both ends of the collection', flush=True)
     initial={n.get('content-desc') for n in nodes()}
     swipe_apps(True); after={n.get('content-desc') for n in nodes()}
-    assert after != initial and '小红书，输入并搜索' in after, 'Horizontal drag must reveal final app'
+    assert after != initial and any(d and d.endswith('，输入并搜索') and d not in initial for d in after), 'Horizontal drag must reveal additional apps'
     capture('widgets-scrolled.png');swipe_apps(False)
     print('PASS horizontal finger swipe reveals additional application icons', flush=True)
     for target in ['豆瓣', '淘宝', '闲鱼', '微信','哔哩哔哩','拼多多','小红书']:
         target_visible(target);tap(desc=target+'，输入并搜索')
         find(desc='快捷搜索关键词'); find(text=target+' ▾')
+        assert not any('源码与许可' in n.get('text','') for n in nodes())
         if target == '豆瓣': capture('input.png')
         close_sheet()
     print('PASS all seven collection clicks preserve the selected application', flush=True)

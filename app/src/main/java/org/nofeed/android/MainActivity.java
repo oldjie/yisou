@@ -249,31 +249,36 @@ public class MainActivity extends Activity {
     }
 
     private void showSettings() {
-        LinearLayout body = page("设置");
-        body.addView(settingAction("添加桌面小组件", () -> SearchWidget.add(this))); space(body, 16);
-        section(body, "搜索偏好");
+        base("settings");
+        SettingsUi ui = new SettingsUi(this); root.setBackgroundColor(0xFFF5F6F4);
+        LinearLayout header = row();
+        TextView title = ui.text("设置", 24, ink); header.addView(title, new LinearLayout.LayoutParams(0, dp(76), 1));
+        TextView close = ui.text("×", 26, muted); close.setGravity(Gravity.CENTER); close.setContentDescription("返回首页");
+        ui.interactive(close, Color.WHITE, 20, this::showHome); header.addView(close, new LinearLayout.LayoutParams(dp(40), dp(40))); root.addView(header);
+        ScrollView scroll = new ScrollView(this); scroll.setVerticalScrollBarEnabled(false); root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout body = column(); body.setPadding(0, 0, 0, dp(32)); scroll.addView(body);
+        LinearLayout preferences = ui.group(body, "搜索偏好");
         SearchTarget defaultTarget = target(store.prefs.getString("default_target", ""));
-        body.addView(settingAction("默认应用  ·  " + (defaultTarget == null ? "每次选择" : defaultTarget.label), () -> {
+        ui.choice(preferences, "默认应用", defaultTarget == null ? "每次选择" : defaultTarget.label, () -> {
             java.util.List<SearchTarget> order = AppCatalog.ordered(this);
-            String[] options = new String[order.size() + 1];
-            options[0] = "每次选择";
+            String[] options = new String[order.size() + 1]; options[0] = "每次选择";
             for (int i=0; i<order.size(); i++) options[i+1] = order.get(i).label;
             new AlertDialog.Builder(this).setTitle("默认应用").setSingleChoiceItems(options, defaultTarget == null ? 0 : order.indexOf(defaultTarget) + 1, (d, which) -> {
                 store.prefs.edit().putString("default_target", which == 0 ? "" : order.get(which-1).name()).apply(); d.dismiss(); showSettings();
-            }).show();
-        }));
-        Switch history = new Switch(this); history.setTypeface(uiFont); history.setText("保存本地搜索历史"); history.setTextSize(15); history.setTextColor(ink); history.setMinHeight(dp(56)); history.setPadding(dp(12), dp(8), dp(12), dp(8)); history.setBackground(background(0xFFF5F6F4, 14, 0xFFE1E5DC));
-        history.setChecked(store.prefs.getBoolean("save_history", true)); history.setOnCheckedChangeListener((v, checked) -> store.prefs.edit().putBoolean("save_history", checked).apply()); body.addView(history);
-        body.addView(text("关闭后不再新增历史；已有记录可在历史页清空。", 12, muted)); space(body, 24);
-        body.addView(settingAction("微信搜索辅助  ·  " + (WechatSearchService.ready() ? "已开启" : "未开启"), () -> WechatSearchService.showOptions(this, draft)));
-        String wechatStatus = WechatSearchService.status(this);
-        if (!wechatStatus.isEmpty()) body.addView(text(wechatStatus, 12, muted));
-        space(body, 24); section(body, "关于一搜");
-        body.addView(text("独立开发的 Android 版本 · 0.6.0\n\n让搜索直达目的地。无账号、无广告、无分析 SDK；数据仅存在本机。\n\n除微信外的六个平台通过链接搜索。微信按保存的位置模拟点击，自动粘贴关键词并搜索；首次需开启辅助权限并保存位置。目标应用仍可能要求登录。\n\n本项目与上述平台无隶属关系。源代码采用 GNU AGPL 第 3 版（AGPL-3.0-only）。允许遵守许可的商用；对外分发须提供对应源码。程序不附任何担保。", 13, muted));
-        space(body, 16); body.addView(settingAction("开源许可与源码", () -> LicenseInfo.show(this)));
-        space(body, 16); body.addView(settingAction("隐私说明", () -> new AlertDialog.Builder(this).setTitle("隐私说明").setMessage("应用不申请联网、通讯录或存储权限。微信辅助只模拟点击、长按，不读取界面控件或截图。搜索词会覆盖系统剪贴板，再粘贴到微信；不读取原剪贴板内容，结束后不清空剪贴板。保存的点击位置可在设置里清除。普通搜索最多 20 秒，首次校准最多 2 分钟，切换应用即停止。本地保存默认应用、最多 200 条搜索历史与累计次数，可关闭或清除历史。系统备份已禁用。")
-                .setPositiveButton("知道了", null).show()));
+            }).setNegativeButton("取消", null).show();
+        });
+        ui.toggle(preferences, "保存搜索历史", "仅保存在本机；关闭后不再新增", store.prefs.getBoolean("save_history", true),
+                checked -> store.prefs.edit().putBoolean("save_history", checked).apply());
+        LinearLayout assistance = ui.group(body, "微信辅助");
+        String status = WechatSearchService.status(this);
+        ui.action(assistance, "微信搜索辅助", (WechatSearchService.ready() ? "已开启" : "未开启") + (status.isEmpty() ? " · 点击管理权限与搜索位置" : " · " + status),
+                () -> WechatSearchService.showOptions(this, draft));
+        LinearLayout desktop = ui.group(body, "桌面");
+        ui.action(desktop, "添加桌面小组件", "4 × 1 · 搜索框与应用图标", () -> SearchWidget.add(this));
+        LinearLayout about = ui.group(body, "关于");
+        ui.action(about, "开源许可与源码", "GNU AGPL v3 · 查看许可与本版本源码", () -> LicenseInfo.show(this));
+        TextView footer = ui.text("一搜 0.6.1 · 让搜索直达目的地", 12, muted);
+        footer.setGravity(Gravity.CENTER); footer.setPadding(0, dp(24), 0, 0); body.addView(footer);
     }
-    private void section(LinearLayout body, String label) { TextView title = text(label, 17, ink); title.setTypeface(uiFont, Typeface.BOLD); body.addView(title); space(body, 10); }
     @Override public void onBackPressed() { if (!"home".equals(screen)) showHome(); else super.onBackPressed(); }
 }

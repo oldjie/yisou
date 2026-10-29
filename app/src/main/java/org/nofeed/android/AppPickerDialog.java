@@ -5,10 +5,15 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Point;
 import android.graphics.drawable.GradientDrawable;
 import android.view.DragEvent;
 import android.view.Gravity;
 import android.view.View;
+import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -44,6 +49,9 @@ final class AppPickerDialog {
         text.setTypeface(Typeface.DEFAULT); text.setGravity(Gravity.CENTER_VERTICAL); return text;
     }
     private void show() {
+        View focused = activity.getCurrentFocus();
+        if (focused != null) ((InputMethodManager)activity.getSystemService(Activity.INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(focused.getWindowToken(), 0);
         LinearLayout body = new LinearLayout(activity); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(8), 0, dp(8), 0);
         TextView hint = label("点选应用 · 长按左侧拖动排序", 12, 0xFF7E847A); hint.setPadding(dp(12), dp(4), dp(12), dp(12)); body.addView(hint);
         int available = Math.round(activity.getResources().getDisplayMetrics().heightPixels / activity.getResources().getDisplayMetrics().density) - 240;
@@ -54,16 +62,25 @@ final class AppPickerDialog {
             AppCatalog.reset(activity); order = AppCatalog.ordered(activity); render(); changed.run();
         }));
         render(); dialog.show();
+        if (dialog.getWindow() != null) {
+            GradientDrawable background = new GradientDrawable(); background.setColor(0xFFFFFFFF); background.setCornerRadius(dp(20));
+            dialog.getWindow().setBackgroundDrawable(background);
+        }
     }
     private void render() {
         list.removeAllViews();
         for (SearchTarget target : order) {
             LinearLayout row = new LinearLayout(activity); row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setAlpha(target == dragging ? .35f : 1f);
+            row.setAlpha(target == dragging ? 0f : 1f);
             if (target == selected) { GradientDrawable fill = new GradientDrawable(); fill.setColor(0xFFF0F2ED); fill.setCornerRadius(dp(12)); row.setBackground(fill); }
             ImageView handle = new ImageView(activity); handle.setImageResource(R.drawable.ic_drag_handle); handle.setScaleType(ImageView.ScaleType.CENTER);
             handle.setContentDescription("拖动排序："+target.label); handle.setFocusable(true);
-            handle.setOnLongClickListener(v -> v.startDragAndDrop(ClipData.newPlainText("排序应用", target.name()), new View.DragShadowBuilder(row), target, 0));
+            final Point grab = new Point(dp(22), dp(28));
+            handle.setOnTouchListener((v, event) -> {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) grab.set(Math.round(event.getX()) + handle.getLeft(), Math.round(event.getY()) + handle.getTop());
+                return false;
+            });
+            handle.setOnLongClickListener(v -> v.startDragAndDrop(ClipData.newPlainText("排序应用", target.name()), shadow(row, grab), target, 0));
             // A click also exposes accessible move actions without a drag gesture.
             handle.setOnClickListener(v -> new AlertDialog.Builder(activity).setTitle(target.label+"排序")
                     .setItems(new String[]{"上移", "下移"}, (d, which) -> {
@@ -80,6 +97,21 @@ final class AppPickerDialog {
             row.setOnClickListener(v -> { selection.choose(target); dialog.dismiss(); });
             list.addView(row, new LinearLayout.LayoutParams(-1, dp(56)));
         }
+    }
+    private View.DragShadowBuilder shadow(View row, Point grab) {
+        // Snapshot before render() replaces the source row. Anchor at the handle,
+        // not the row center, so its horizontal position stays under the list.
+        Bitmap image = Bitmap.createBitmap(row.getWidth(), row.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+        GradientDrawable card = new GradientDrawable(); card.setColor(0xFFF0F2ED); card.setCornerRadius(dp(12));
+        card.setBounds(0, 0, image.getWidth(), image.getHeight()); card.draw(canvas); row.draw(canvas);
+        return new View.DragShadowBuilder() {
+            @Override public void onProvideShadowMetrics(Point size, Point touch) {
+                size.set(image.getWidth(), image.getHeight());
+                touch.set(Math.max(0, Math.min(size.x, grab.x)), Math.max(0, Math.min(size.y, grab.y)));
+            }
+            @Override public void onDrawShadow(Canvas output) { output.drawBitmap(image, 0, 0, null); }
+        };
     }
     private void move(int from, int to) {
         if (from < 0 || from == to) return;

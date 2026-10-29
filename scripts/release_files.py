@@ -26,6 +26,8 @@ ROOT_FILES = (
     'app/src/main/res/drawable-nodpi/platform_pinduoduo.png',
     'app/src/main/res/drawable-nodpi/platform_xiaohongshu.png',
     'docs/PLATFORM_ICONS.md',
+    'docs/settings-yisou-0.6.1.png',
+    'docs/more-yisou-0.6.1.png',
     'docs/home-yisou-0.6.0.png',
     'docs/more-yisou-0.6.0.png',
     'docs/order-yisou-0.6.0.png',

@@ -22,6 +22,7 @@ final class LicenseInfo {
             notice += output.toString("UTF-8");
         } catch (java.io.IOException e) { notice += "完整许可也可在本版本源码的 LICENSE 文件中查看。"; }
         TextView text = new TextView(activity); text.setText(notice); text.setTextSize(13);
+        text.setTypeface(android.graphics.Typeface.DEFAULT);
         text.setTextColor(0xFF282F29); text.setTextIsSelectable(true);
         int padding = (int)(16 * activity.getResources().getDisplayMetrics().density);
         text.setPadding(padding, padding, padding, padding);

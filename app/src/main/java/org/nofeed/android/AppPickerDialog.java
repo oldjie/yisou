@@ -25,6 +25,7 @@ import java.util.List;
 final class AppPickerDialog {
     interface Selection { void choose(SearchTarget target); }
     private final Activity activity;
+    private final Appearance.Palette colors;
     private final SearchTarget selected;
     private final Selection selection;
     private final Runnable changed;
@@ -38,7 +39,7 @@ final class AppPickerDialog {
         new AppPickerDialog(activity, selected, selection, changed).show();
     }
     private AppPickerDialog(Activity activity, SearchTarget selected, Selection selection, Runnable changed) {
-        this.activity = activity; this.selected = selected; this.selection = selection; this.changed = changed;
+        this.activity = activity; this.colors = Appearance.palette(activity); this.selected = selected; this.selection = selection; this.changed = changed;
         order = AppCatalog.ordered(activity); list = new LinearLayout(activity); list.setOrientation(LinearLayout.VERTICAL);
         scroll = new ScrollView(activity); scroll.setFillViewport(false); scroll.addView(list);
         scroll.setOnDragListener((view, event) -> drag(event));
@@ -53,7 +54,7 @@ final class AppPickerDialog {
         if (focused != null) ((InputMethodManager)activity.getSystemService(Activity.INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(focused.getWindowToken(), 0);
         LinearLayout body = new LinearLayout(activity); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(8), 0, dp(8), 0);
-        TextView hint = label("点选应用 · 长按左侧拖动排序", 12, 0xFF7E847A); hint.setPadding(dp(12), dp(4), dp(12), dp(12)); body.addView(hint);
+        TextView hint = label("点选应用 · 长按左侧拖动排序", 12, colors.muted); hint.setPadding(dp(12), dp(4), dp(12), dp(12)); body.addView(hint);
         int available = Math.round(activity.getResources().getDisplayMetrics().heightPixels / activity.getResources().getDisplayMetrics().density) - 240;
         body.addView(scroll, new LinearLayout.LayoutParams(-1, dp(Math.max(200, Math.min(392, available)))));
         dialog = new AlertDialog.Builder(activity).setTitle("应用")
@@ -63,7 +64,7 @@ final class AppPickerDialog {
         }));
         render(); dialog.show();
         if (dialog.getWindow() != null) {
-            GradientDrawable background = new GradientDrawable(); background.setColor(0xFFFFFFFF); background.setCornerRadius(dp(20));
+            GradientDrawable background = new GradientDrawable(); background.setColor(colors.surface); background.setCornerRadius(dp(20));
             dialog.getWindow().setBackgroundDrawable(background);
         }
     }
@@ -72,8 +73,8 @@ final class AppPickerDialog {
         for (SearchTarget target : order) {
             LinearLayout row = new LinearLayout(activity); row.setGravity(Gravity.CENTER_VERTICAL);
             row.setAlpha(target == dragging ? 0f : 1f);
-            if (target == selected) { GradientDrawable fill = new GradientDrawable(); fill.setColor(0xFFF0F2ED); fill.setCornerRadius(dp(12)); row.setBackground(fill); }
-            ImageView handle = new ImageView(activity); handle.setImageResource(R.drawable.ic_drag_handle); handle.setScaleType(ImageView.ScaleType.CENTER);
+            if (target == selected) { GradientDrawable fill = new GradientDrawable(); fill.setColor(colors.selected); fill.setCornerRadius(dp(12)); row.setBackground(fill); }
+            ImageView handle = new ImageView(activity); handle.setImageResource(R.drawable.ic_drag_handle); handle.setImageTintList(android.content.res.ColorStateList.valueOf(colors.muted)); handle.setScaleType(ImageView.ScaleType.CENTER);
             handle.setContentDescription("拖动排序："+target.label); handle.setFocusable(true);
             final Point grab = new Point(dp(22), dp(28));
             handle.setOnTouchListener((v, event) -> {
@@ -89,9 +90,9 @@ final class AppPickerDialog {
                     }).show());
             row.addView(handle, new LinearLayout.LayoutParams(dp(44), dp(56)));
             row.addView(new AppIconView(activity, AppCatalog.icon(activity, target)), new LinearLayout.LayoutParams(dp(28), dp(28)));
-            TextView name = label(target.label, 15, 0xFF282F29); name.setPadding(dp(12),0,0,0);
+            TextView name = label(target.label, 15, colors.ink); name.setPadding(dp(12),0,0,0);
             row.addView(name, new LinearLayout.LayoutParams(0, dp(56), 1));
-            TextView status = label(AppCatalog.installed(activity,target) ? "已安装" : "未安装", 11, 0xFF7E847A);
+            TextView status = label(AppCatalog.installed(activity,target) ? "已安装" : "未安装", 11, colors.muted);
             status.setPadding(dp(6),0,dp(12),0); row.addView(status);
             row.setContentDescription("选择应用："+target.label); row.setFocusable(true);
             row.setOnClickListener(v -> { selection.choose(target); dialog.dismiss(); });
@@ -103,7 +104,7 @@ final class AppPickerDialog {
         // not the row center, so its horizontal position stays under the list.
         Bitmap image = Bitmap.createBitmap(row.getWidth(), row.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(image);
-        GradientDrawable card = new GradientDrawable(); card.setColor(0xFFF0F2ED); card.setCornerRadius(dp(12));
+        GradientDrawable card = new GradientDrawable(); card.setColor(colors.selected); card.setCornerRadius(dp(12));
         card.setBounds(0, 0, image.getWidth(), image.getHeight()); card.draw(canvas); row.draw(canvas);
         return new View.DragShadowBuilder() {
             @Override public void onProvideShadowMetrics(Point size, Point touch) {

@@ -54,3 +54,7 @@ docs/*.png
 
 !docs/settings-yisou-0.6.1.png
 !docs/more-yisou-0.6.1.png
+
+!docs/settings-light-yisou-0.7.0.png
+!docs/settings-dark-yisou-0.7.0.png
+!docs/widget-input-dark-yisou-0.7.0.png

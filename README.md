@@ -10,7 +10,9 @@
 
 ## 安装与使用
 
-当前开发预览版：0.6.1（Android 8.0 / API 26 及以上，通用架构）。公开预览包见 [Releases](https://github.com/oldjie/yisou/releases)；本地直接构建产物为 `dist/yisou-0.6.1.apk`。复制到手机，使用系统文件管理器打开安装。系统可能要求允许该文件管理器安装应用。
+当前开发预览版：0.7.0（Android 8.0 / API 26 及以上，通用架构）。公开预览包见 [Releases](https://github.com/oldjie/yisou/releases)；本地直接构建产物为 `dist/yisou-0.7.0.apk`。复制到手机，使用系统文件管理器打开安装。系统可能要求允许该文件管理器安装应用。
+
+0.7.0 新增“设置 → 外观”：默认跟随系统，也可固定浅色或深色。首页、历史、设置、原生弹窗、更多列表和小组件输入窗一起适配，品牌图标保持原色；桌面组件同步外观。设置页的状态栏和导航栏随页面背景匹配，修复顶部白色横条。切换外观保留正在输入的草稿、所选平台和当前页面。
 
 0.6.1 修复长按排序浮层偏到左侧的问题，抓取位置保持在左侧手柄，拖动时不再显示原位置重影。设置采用 Android 原生控件组成的分组列表，统一系统字体、卡片与点击反馈；默认应用仅右侧的应用名按钮可以选择，移除设置中的“隐私说明”入口。搜索功能、历史和微信位置沿用已有配置。
 
@@ -29,7 +31,8 @@
 <p align="center">
   <img src="docs/home-yisou-0.6.0.png" alt="四个半应用图标提示横滑" width="220">
   <img src="docs/more-yisou-0.6.1.png" alt="更多中左侧长按拖动排序；未安装微信仍显示图标" width="220">
-  <img src="docs/settings-yisou-0.6.1.png" alt="原生分组设置与右侧默认应用选择" width="220">
+  <img src="docs/settings-light-yisou-0.7.0.png" alt="浅色设置与同色状态栏" width="220">
+  <img src="docs/settings-dark-yisou-0.7.0.png" alt="深色设置" width="220">
 </p>
 
 截图来自测试模拟器，未安装微信，仍正常显示其内置图标。[手动排序预览](docs/order-yisou-0.6.0.png)、[小组件输入窗](docs/widget-input-yisou-0.6.0.png)。

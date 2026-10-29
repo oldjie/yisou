@@ -1,11 +1,11 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root"
     android:layout_width="match_parent" android:layout_height="44dp"
     android:orientation="horizontal" android:gravity="center_vertical"
     android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="4dp" android:paddingBottom="4dp"
     android:baselineAligned="false" android:background="@drawable/widget_background">
     <TextView android:id="@+id/widget_query" android:layout_width="60dp" android:layout_height="36dp"
         android:text="@string/widget_query_hint" android:textSize="12sp" android:singleLine="true"
-        android:fontFamily="@font/noto_serif_sc_regular" android:textColor="#757D70" android:gravity="center"
+        android:fontFamily="@font/noto_serif_sc_regular" android:textColor="@color/widget_muted" android:gravity="center"
         android:includeFontPadding="false" android:background="@drawable/widget_search_field"
         android:focusable="true" android:contentDescription="@string/widget_query_description" />
     <TextView android:layout_width="4dp" android:layout_height="1dp" />
@@ -18,6 +18,6 @@
             android:overScrollMode="never" android:clipChildren="false" android:clipToPadding="false" />
     </FrameLayout>
     <TextView android:id="@+id/widget_next" android:layout_width="20dp" android:layout_height="36dp"
-        android:text="›" android:textSize="22sp" android:textColor="#757D70" android:gravity="center"
+        android:text="›" android:textSize="22sp" android:textColor="@color/widget_muted" android:gravity="center"
         android:includeFontPadding="false" android:focusable="true" android:contentDescription="@string/widget_next" />
 </LinearLayout>

@@ -3,6 +3,7 @@ package org.nofeed.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -23,9 +24,19 @@ public class WidgetSearchActivity extends Activity {
     private EditText query;
     private TextView platform;
     private LocalStore store;
+    private Appearance.Palette colors;
+    private boolean dark;
+    private String appearanceMode;
+
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Appearance.wrap(base));
+    }
 
     @Override public void onCreate(Bundle state) {
+        Appearance.apply(this, true);
         super.onCreate(state); setFinishOnTouchOutside(true);
+        colors = Appearance.palette(this); dark = Appearance.isDark(this); appearanceMode = Appearance.mode(this);
+        Appearance.bars(this, colors.surface);
         store = new LocalStore(this); SearchWidget.initialize(this);
         selected = parse(state != null ? state.getString("target") : getIntent().getStringExtra("target"));
         if (selected == null) selected = parse(store.prefs.getString("default_target", ""));
@@ -33,16 +44,16 @@ public class WidgetSearchActivity extends Activity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(20), dp(16), dp(20), dp(12));
-        GradientDrawable paper = new GradientDrawable(); paper.setColor(Color.WHITE); paper.setCornerRadius(dp(22)); root.setBackground(paper);
+        GradientDrawable paper = new GradientDrawable(); paper.setColor(colors.surface); paper.setCornerRadius(dp(22)); root.setBackground(paper);
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
         platform = label("", 16); platform.setGravity(Gravity.CENTER_VERTICAL); platform.setContentDescription("切换搜索应用"); platform.setOnClickListener(v -> choose(false));
         header.addView(platform, new LinearLayout.LayoutParams(0, dp(44), 1)); updatePlatform();
         TextView close = label("×", 22); close.setGravity(Gravity.CENTER); close.setContentDescription("关闭快捷搜索"); close.setOnClickListener(v -> finish());
         header.addView(close, new LinearLayout.LayoutParams(dp(44), dp(44))); root.addView(header);
         LinearLayout field = new LinearLayout(this); field.setGravity(Gravity.CENTER_VERTICAL);
-        GradientDrawable fill = new GradientDrawable(); fill.setColor(0xFFF3F5F1); fill.setCornerRadius(dp(12)); field.setBackground(fill);
-        query = new EditText(this); query.setSingleLine(true); query.setTextSize(17); query.setTextColor(0xFF282F29);
-        query.setHintTextColor(0xFF92988E); query.setHint("搜索…"); query.setPadding(dp(14), 0, dp(4), 0);
+        GradientDrawable fill = new GradientDrawable(); fill.setColor(colors.field); fill.setCornerRadius(dp(12)); field.setBackground(fill);
+        query = new EditText(this); query.setSingleLine(true); query.setTextSize(17); query.setTextColor(colors.ink);
+        query.setHintTextColor(colors.hint); query.setHint("搜索…"); query.setPadding(dp(14), 0, dp(4), 0);
         query.setGravity(Gravity.CENTER_VERTICAL); query.setIncludeFontPadding(false); query.setBackgroundColor(Color.TRANSPARENT);
         query.setInputType(android.text.InputType.TYPE_CLASS_TEXT); query.setTypeface(getResources().getFont(R.font.noto_serif_sc_regular));
         query.setImeOptions(EditorInfo.IME_ACTION_SEARCH); query.setContentDescription("快捷搜索关键词");
@@ -61,7 +72,11 @@ public class WidgetSearchActivity extends Activity {
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private TextView label(String value, int size) {
-        TextView v = new TextView(this); v.setText(value); v.setTextSize(size); v.setTextColor(0xFF282F29); v.setTypeface(Typeface.DEFAULT); v.setIncludeFontPadding(false); return v;
+        TextView v = new TextView(this); v.setText(value); v.setTextSize(size); v.setTextColor(colors.ink); v.setTypeface(Typeface.DEFAULT); v.setIncludeFontPadding(false); return v;
+    }
+    @Override protected void onResume() {
+        super.onResume();
+        if (query != null && (dark != Appearance.isDark(this) || !appearanceMode.equals(Appearance.mode(this)))) recreate();
     }
     private SearchTarget parse(String name) { try { return SearchTarget.valueOf(name); } catch (Exception ignored) { return null; } }
     private void updatePlatform() { platform.setText(selected == null ? "选择搜索应用 ▾" : selected.label + " ▾"); }

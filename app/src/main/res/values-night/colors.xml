@@ -1,0 +1,10 @@
+<resources>
+    <color name="ui_paper">#141715</color>
+    <color name="ui_settings">#141715</color>
+    <color name="ui_surface">#20251F</color>
+    <color name="ui_field">#272D26</color>
+    <color name="ui_ink">#E4E9E1</color>
+    <color name="ui_muted">#A7B0A3</color>
+    <color name="ui_accent">#C7D9BF</color>
+    <bool name="ui_light_bars">false</bool>
+</resources>

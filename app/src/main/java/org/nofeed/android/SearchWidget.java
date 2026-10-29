@@ -5,8 +5,10 @@ import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +18,17 @@ import android.widget.RemoteViews;
 /** Single-row search entry and a horizontally transformed system collection. */
 public class SearchWidget extends AppWidgetProvider {
     private static Context appContext;
-    static void initialize(Context context) { appContext = context.getApplicationContext(); }
+    private static BroadcastReceiver configurationObserver;
+    static void initialize(Context context) {
+        appContext = context.getApplicationContext();
+        if (configurationObserver != null) return;
+        configurationObserver = new BroadcastReceiver() {
+            @Override public void onReceive(Context c, Intent intent) { refresh(); }
+        };
+        IntentFilter filter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
+        if (Build.VERSION.SDK_INT >= 33) appContext.registerReceiver(configurationObserver, filter, Context.RECEIVER_NOT_EXPORTED);
+        else appContext.registerReceiver(configurationObserver, filter);
+    }
     static void add(android.app.Activity activity) {
         AppWidgetManager manager = AppWidgetManager.getInstance(activity);
         ComponentName provider = new ComponentName(activity, SearchWidget.class);
@@ -31,10 +43,35 @@ public class SearchWidget extends AppWidgetProvider {
         new SearchWidget().onUpdate(appContext, manager, manager.getAppWidgetIds(new ComponentName(appContext, SearchWidget.class)));
     }
     @Override public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
+        initialize(context);
         for (int id : ids) {
             Bundle options = manager.getAppWidgetOptions(id);
             int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
             RemoteViews view = new RemoteViews(context.getPackageName(), R.layout.search_widget_compact);
+            // Follow-system uses resource colors so the launcher can re-inflate
+            // a saved widget in its current mode even while our process is gone.
+            // Explicit modes use fixed resources regardless of launcher theme.
+            if ("system".equals(Appearance.mode(context))) {
+                // Full updates may reapply to an existing host view. Explicitly
+                // replace manual-mode actions instead of relying on XML defaults.
+                view.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background);
+                view.setInt(R.id.widget_query, "setBackgroundResource", R.drawable.widget_search_field);
+                if (Build.VERSION.SDK_INT >= 31) {
+                    view.setColor(R.id.widget_query, "setTextColor", R.color.widget_muted);
+                    view.setColor(R.id.widget_next, "setTextColor", R.color.widget_muted);
+                } else {
+                    int muted = Appearance.palette(context).muted;
+                    view.setTextColor(R.id.widget_query, muted);
+                    view.setTextColor(R.id.widget_next, muted);
+                }
+            } else {
+                boolean dark = Appearance.isDark(context);
+                Appearance.Palette colors = Appearance.palette(context);
+                view.setInt(R.id.widget_root, "setBackgroundResource", dark ? R.drawable.widget_background_dark : R.drawable.widget_background_light);
+                view.setInt(R.id.widget_query, "setBackgroundResource", dark ? R.drawable.widget_search_field_dark : R.drawable.widget_search_field_light);
+                view.setTextColor(R.id.widget_query, colors.muted);
+                view.setTextColor(R.id.widget_next, colors.muted);
+            }
             view.setOnClickPendingIntent(R.id.widget_query, input(context, id, false));
             // ListView is rotated in XML; each icon is counter-rotated. Touch
             // coordinates follow Android's transform, enabling horizontal drag

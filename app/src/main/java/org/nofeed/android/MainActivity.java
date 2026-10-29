@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
-    private final int paper = Color.WHITE, ink = Color.rgb(40,47,41), muted = Color.rgb(126,132,122);
+    private Appearance.Palette colors;
+    private String appearanceMode;
+    private int paper, ink, muted;
     private LocalStore store;
     private Typeface uiFont;
     private LinearLayout root, content, choices;
@@ -33,8 +35,15 @@ public class MainActivity extends Activity {
     private SearchTarget selected;
     private String screen = "home", draft = "";
 
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Appearance.wrap(base));
+    }
+
     @Override public void onCreate(Bundle state) {
+        Appearance.apply(this, false);
         super.onCreate(state);
+        colors = Appearance.palette(this); paper = colors.paper; ink = colors.ink; muted = colors.muted;
+        appearanceMode = Appearance.mode(this);
         uiFont = getResources().getFont(R.font.noto_serif_sc_regular);
         store = new LocalStore(this);
         // Removed preferences must not affect future launches after an upgrade.
@@ -48,8 +57,11 @@ public class MainActivity extends Activity {
             draft = state.getString("draft", "");
             selected = target(state.getString("selected"));
         } else selected = target(store.prefs.getString("default_target", ""));
-        consumeIntent(getIntent());
-        showHome();
+        if (state == null) consumeIntent(getIntent());
+        String previous = state == null ? "home" : state.getString("screen", "home");
+        if ("settings".equals(previous)) showSettings();
+        else if ("历史记录".equals(previous)) showHistory();
+        else showHome();
     }
 
     private SearchTarget target(String name) {
@@ -65,6 +77,8 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); setIntent(intent); consumeIntent(intent); showHome(); }
     @Override protected void onResume() {
         super.onResume();
+        boolean renderedDark = (getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        if (renderedDark != Appearance.isDark(this) || !appearanceMode.equals(Appearance.mode(this))) { recreate(); return; }
         SearchWidget.refresh();
         if ("settings".equals(screen)) showSettings();
         else if ("home".equals(screen) && choices != null) renderChoices();
@@ -73,6 +87,7 @@ public class MainActivity extends Activity {
         super.onSaveInstanceState(out);
         out.putString("draft", query != null ? query.getText().toString() : draft);
         out.putString("selected", selected == null ? "" : selected.name());
+        out.putString("screen", screen);
     }
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
     private GradientDrawable background(int color, int radius, int stroke) {
@@ -91,19 +106,20 @@ public class MainActivity extends Activity {
         view.setOnClickListener(v -> click.run()); view.setFocusable(true); return view;
     }
     private void space(LinearLayout parent, int height) { View v = new View(this); parent.addView(v, new LinearLayout.LayoutParams(1, dp(height))); }
-    private void line(LinearLayout parent) { View v = new View(this); v.setBackgroundColor(0xFFE0E2D9); parent.addView(v, new LinearLayout.LayoutParams(-1, dp(1))); }
+    private void line(LinearLayout parent) { View v = new View(this); v.setBackgroundColor(colors.divider); parent.addView(v, new LinearLayout.LayoutParams(-1, dp(1))); }
     private LinearLayout column() { LinearLayout l = new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); return l; }
     private LinearLayout row() { LinearLayout l = new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); l.setGravity(Gravity.CENTER_VERTICAL); return l; }
     private void base(String page) {
         screen = page;
-        root = column(); root.setBackgroundColor(paper); root.setPadding(dp(26), 0, dp(26), 0);
+        int pageColor = "settings".equals(page) ? colors.settings : paper;
+        root = column(); root.setBackgroundColor(pageColor); root.setPadding(dp(26), 0, dp(26), 0);
         // API 35 draws edge-to-edge. Insets keep every control outside system bars and keyboard.
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             root.setPadding(dp(26) + insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
                     dp(26) + insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
             return insets;
         });
-        setContentView(root); root.requestApplyInsets();
+        setContentView(root); Appearance.bars(this, pageColor); root.requestApplyInsets();
     }
     private void captureDraft() { if (query != null) draft = query.getText().toString(); }
 
@@ -122,8 +138,8 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         content = column(); content.setGravity(Gravity.CENTER_VERTICAL); scroll.addView(content);
-        LinearLayout field = row(); field.setBackground(background(0xFFF5F6F4, 14, 0));
-        query = new EditText(this); query.setSingleLine(true); query.setTextSize(17); query.setTextColor(ink); query.setHintTextColor(0xFF999E98);
+        LinearLayout field = row(); field.setBackground(background(colors.field, 14, 0));
+        query = new EditText(this); query.setSingleLine(true); query.setTextSize(17); query.setTextColor(ink); query.setHintTextColor(colors.hint);
         query.setHint("搜索…"); query.setBackgroundColor(Color.TRANSPARENT); query.setPadding(dp(16), 0, dp(4), 0);
         query.setGravity(Gravity.START | Gravity.CENTER_VERTICAL); query.setIncludeFontPadding(false);
         query.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
@@ -166,7 +182,7 @@ public class MainActivity extends Activity {
             item.addView(icon, new LinearLayout.LayoutParams(iconSize, iconSize));
             space(item, 7); item.addView(appLabel(t.label, selected == t ? ink : muted));
             item.setTooltipText(t.label + (!installed ? "（未安装）" : ""));
-            if (selected == t) item.setBackground(background(0xFFF0F2ED, 14, 0));
+            if (selected == t) item.setBackground(background(colors.selected, 14, 0));
             item.setContentDescription(t.label + (selected == t ? "，已选择" : "，点击选择")); item.setSelected(selected == t); item.setFocusable(true);
             item.setOnClickListener(v -> { selected = t; renderChoices(); updateButton(); });
             choices.addView(item, new LinearLayout.LayoutParams(itemWidth, dp(84)));
@@ -211,7 +227,7 @@ public class MainActivity extends Activity {
         base(name);
         LinearLayout header = row(); TextView title = text(name, 25, ink);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(80), 1)); title.setGravity(Gravity.CENTER_VERTICAL);
-        TextView close = action("×", this::showHome); close.setTextSize(28); close.setContentDescription("返回首页"); close.setBackground(background(0xFFF5F6F4, 14, 0xFFE1E5DC)); header.addView(close); root.addView(header);
+        TextView close = action("×", this::showHome); close.setTextSize(28); close.setContentDescription("返回首页"); close.setBackground(background(colors.field, 14, colors.divider)); header.addView(close); root.addView(header);
         ScrollView scroll = new ScrollView(this); root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout body = column(); body.setPadding(0, dp(8), 0, dp(32)); scroll.addView(body); return body;
     }
@@ -244,17 +260,17 @@ public class MainActivity extends Activity {
     private TextView settingAction(String value, Runnable click) {
         TextView view = action(value, click); view.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         view.setBackground(new android.graphics.drawable.RippleDrawable(
-                android.content.res.ColorStateList.valueOf(0x1A474E47), background(0xFFF5F6F4, 14, 0xFFE1E5DC), null));
+                android.content.res.ColorStateList.valueOf(colors.ripple), background(colors.field, 14, colors.divider), null));
         LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(-1, -2); layout.bottomMargin = dp(10); view.setLayoutParams(layout); return view;
     }
 
     private void showSettings() {
         base("settings");
-        SettingsUi ui = new SettingsUi(this); root.setBackgroundColor(0xFFF5F6F4);
+        SettingsUi ui = new SettingsUi(this);
         LinearLayout header = row();
         TextView title = ui.text("设置", 24, ink); header.addView(title, new LinearLayout.LayoutParams(0, dp(76), 1));
         TextView close = ui.text("×", 26, muted); close.setGravity(Gravity.CENTER); close.setContentDescription("返回首页");
-        ui.interactive(close, Color.WHITE, 20, this::showHome); header.addView(close, new LinearLayout.LayoutParams(dp(40), dp(40))); root.addView(header);
+        ui.interactive(close, colors.surface, 20, this::showHome); header.addView(close, new LinearLayout.LayoutParams(dp(40), dp(40))); root.addView(header);
         ScrollView scroll = new ScrollView(this); scroll.setVerticalScrollBarEnabled(false); root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout body = column(); body.setPadding(0, 0, 0, dp(32)); scroll.addView(body);
         LinearLayout preferences = ui.group(body, "搜索偏好");
@@ -269,6 +285,19 @@ public class MainActivity extends Activity {
         });
         ui.toggle(preferences, "保存搜索历史", "仅保存在本机；关闭后不再新增", store.prefs.getBoolean("save_history", true),
                 checked -> store.prefs.edit().putBoolean("save_history", checked).apply());
+        String mode = Appearance.mode(this);
+        String modeLabel = "dark".equals(mode) ? "深色" : "light".equals(mode) ? "浅色" : "跟随系统";
+        ui.choice(preferences, "外观", modeLabel, () -> {
+            String[] modes = {"system", "light", "dark"};
+            String[] labels = {"跟随系统", "浅色", "深色"};
+            int current = "dark".equals(mode) ? 2 : "light".equals(mode) ? 1 : 0;
+            new AlertDialog.Builder(this).setTitle("外观").setSingleChoiceItems(labels, current, (d, which) -> {
+                d.dismiss();
+                if (!modes[which].equals(Appearance.mode(this))) {
+                    Appearance.save(this, modes[which]); SearchWidget.refresh(); recreate();
+                }
+            }).setNegativeButton("取消", null).show();
+        });
         LinearLayout assistance = ui.group(body, "微信辅助");
         String status = WechatSearchService.status(this);
         ui.action(assistance, "微信搜索辅助", (WechatSearchService.ready() ? "已开启" : "未开启") + (status.isEmpty() ? " · 点击管理权限与搜索位置" : " · " + status),
@@ -277,7 +306,7 @@ public class MainActivity extends Activity {
         ui.action(desktop, "添加桌面小组件", "4 × 1 · 搜索框与应用图标", () -> SearchWidget.add(this));
         LinearLayout about = ui.group(body, "关于");
         ui.action(about, "开源许可与源码", "GNU AGPL v3 · 查看许可与本版本源码", () -> LicenseInfo.show(this));
-        TextView footer = ui.text("一搜 0.6.1 · 让搜索直达目的地", 12, muted);
+        TextView footer = ui.text("一搜 0.7.0 · 让搜索直达目的地", 12, muted);
         footer.setGravity(Gravity.CENTER); footer.setPadding(0, dp(24), 0, 0); body.addView(footer);
     }
     @Override public void onBackPressed() { if (!"home".equals(screen)) showHome(); else super.onBackPressed(); }

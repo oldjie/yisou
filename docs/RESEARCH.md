@@ -74,3 +74,17 @@
 - 小红书：510ee7bc44620144d91bd0f8f52642b12d4e4b57dc9c8d3e1e71385856357226
 
 原版自身在模拟器的异常不等同于一搜路由失败，也不证明手机可以成功，最终仍需已安装、已完成首次提示及必要登录的真实手机复测。未登录任何账号、未购买或执行社交操作。
+
+
+## 0.8.0 新增平台（2026-11-01）
+
+只扩展固定目标目录，不改首页、排序规则、微信辅助或深浅外观。原七个枚举位置保留，新项追加为美团、携程、高德地图、淘宝闪购。淘宝闪购读取独立客户端 me.ele，与淘宝商品搜索分开。
+
+- 高德：使用[官方 Android 搜索地点文档](https://lbs.amap.com/api/amap-mobile/guide/android/search)的 androidamap://poi，传 sourceApplication、keywords、dev=0，不传一搜定位。网页备用来自[官方 URI 搜索查询文档](https://lbs.amap.com/api/uri-api/guide/search/search)，callnative=0。应用宝原版17.02.0.2010的公开 SchemeHandleActivity/MapActivity 可接收该链接；一次性模拟器冷启动进入首次隐私提示，没有代点同意。
+- 美团：12.68.202 原版 Manifest 与 IntentUtils/结果预加载器存在 /search/result 路由；结果 Activity 读取 q，并向结果 Fragment/request 交接。采用 imeituan://www.meituan.com/search/result?q=，不用可能只显示输入态的 /search。
+- 淘宝闪购：12.10.38 原版公开 SchemeRouteActivity 接受 xsearchresult，XSearchActivity 的路由及参数注解读取 keyword；非空关键词经过 Presenter 调用 setQuery(keyword,true)，触发查询提交链。采用 eleme://xsearchresult?keyword=。
+- 携程：8.97.0 原版公开 CtripBootActivity 接受 ctrip://wireless/*；GlobalHomeSearchActivity 本身非公开，不能直接启动。其搜索按钮构造 /rn_search/_crn_config 的 datatype=all 结果模块，装入 h5 网关的 url 参数并指定 type=5。网关从原始 encoded query 读取裸 Base64，解码后启动原生 RN 容器。内层关键词按 UTF-8 编码，RN参数读取器逐值 URLDecoder 解码；外层 Base64 不再 URL 编码。采用原版无定位时的 cityid=0、lat=-180.0、lon=-180.0，不获取用户位置。来源标记 subSourceFrom 省略；其原版缺省为 null。该 RN 结果包按需下载，静态 APK 不包含加载后的结果 JS，不能以原方法构造和网关匹配声称真实搜索结果已验收。
+
+四个原版来源、版本和哈希见 [图标记录](PLATFORM_ICONS.md)。美团、携程、淘宝闪购没有确认到与客户端搜索等价的可靠网页入口，因此没有猜测备用地址：只有这些新项在原生跳转失败时提示安装/版本不支持，旧目标的网页确认逻辑保留。携程官方攻略搜索页范围不同，不替代客户端的全局搜索。
+
+工具范围：REA 的 Android provider 在本机缺少调用者提供的 JADX MCP JAR，没有修改客户端配置；使用已有 AAPT2、apksigner、JADX CLI 定向核对原始安装包。此处是静态协议核对与 UI 集成测试，不称为 REA 原生证据或真实结果页通过。自动审批拒绝代点第三方首次隐私协议/权限，故未登录账号、未接受新协议、未在协议后执行结果页验收，也未进行购买/下单。

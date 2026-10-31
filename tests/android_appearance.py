@@ -33,8 +33,8 @@ output = root / 'build' / 'appearance'
 output.mkdir(parents=True, exist_ok=True)
 package = 'org.nofeed.android'
 modes = ('跟随系统', '浅色', '深色')
-targets = dict(zip(('豆瓣', '淘宝', '闲鱼', '微信', '哔哩哔哩', '拼多多', '小红书'),
-                   ('DOUBAN', 'TAOBAO', 'XIANYU', 'WECHAT', 'BILIBILI', 'PINDUODUO', 'XIAOHONGSHU')))
+targets = dict(zip(('豆瓣', '淘宝', '闲鱼', '微信', '哔哩哔哩', '拼多多', '小红书', '美团', '携程', '高德地图', '淘宝闪购'),
+                   ('DOUBAN', 'TAOBAO', 'XIANYU', 'WECHAT', 'BILIBILI', 'PINDUODUO', 'XIAOHONGSHU', 'MEITUAN', 'CTRIP', 'AMAP', 'TAOBAO_SHANGOU')))
 
 
 def adb(*values):

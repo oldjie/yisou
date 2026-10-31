@@ -33,6 +33,12 @@ final class SearchLauncher {
             }
         }
         }
+        if (target.webTemplate == null) {
+            new AlertDialog.Builder(activity).setTitle("无法直达" + target.label)
+                    .setMessage("请确认已安装" + target.label + "，并使用支持搜索跳转的版本。此入口暂不提供网页版搜索。")
+                    .setPositiveButton("知道了", null).show();
+            return;
+        }
             new AlertDialog.Builder(activity).setTitle("无法直达" + target.label)
                     .setMessage("可能尚未安装应用，或当前版本不支持这条搜索链接。可以改用网页版搜索。")
                     .setNegativeButton("返回", null).setPositiveButton("用网页版搜索", (dialog, which) -> {

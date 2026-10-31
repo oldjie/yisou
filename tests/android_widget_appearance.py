@@ -20,6 +20,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 HOST = 'org.nofeed.widgetfixture'
 LABELS = {'system': '跟随系统', 'light': '浅色', 'dark': '深色'}
+TARGET_LABELS = {'豆瓣', '淘宝', '闲鱼', '微信', '哔哩哔哩', '拼多多', '小红书', '美团', '携程', '高德地图', '淘宝闪购'}
 SURFACE = {False: (255, 255, 255), True: (32, 37, 31)}
 FIELD = {False: (243, 245, 241), True: (39, 45, 38)}
 
@@ -72,11 +73,32 @@ class Regression:
     def set_mode(self, mode):
         self.settings(); self.tap_node(self.appearance_control()); self.tap(text=LABELS[mode]); time.sleep(.5)
         assert self.appearance_control().get('content-desc').startswith('外观：'+LABELS[mode])
+    def order_page(self, current):
+        return [n.get('content-desc') for n in current if n.get('content-desc', '').startswith('拖动排序：') and self.bounds(n)[3] > self.bounds(n)[1]]
+    def scroll_order(self, down, current=None):
+        current = self.nodes() if current is None else current
+        viewport = next(n for n in current if n.get('class') == 'android.widget.ScrollView'
+                        and any(m.get('content-desc', '').startswith('拖动排序：') for m in n.iter('node')))
+        a,b,c,d = self.bounds(viewport); start,end = (d-16,b+16) if down else (b+16,d-16)
+        self.sh('input','swipe',(a+c)//2,start,(a+c)//2,end,'350'); time.sleep(.3)
+    def order_top(self):
+        previous = None
+        for _ in TARGET_LABELS:
+            current = self.nodes(); page = self.order_page(current)
+            if page == previous: return
+            previous = page; self.scroll_order(False,current)
     def order(self):
-        self.main(); self.tap(desc='更多应用')
-        result = [n.get('content-desc') for n in self.nodes() if n.get('content-desc', '').startswith('拖动排序：')]
-        assert len(result) == 7
-        self.tap(text='完成'); return result
+        self.main(); self.tap(desc='更多应用'); self.order_top()
+        result = []; previous = None
+        for _ in TARGET_LABELS:
+            current = self.nodes(); page = self.order_page(current)
+            for item in page:
+                if item not in result: result.append(item)
+            if len(result) == len(TARGET_LABELS): break
+            assert page != previous, ('Catalog scroll ended before all targets',result)
+            previous = page; self.scroll_order(True,current)
+        assert {item.split('：',1)[1] for item in result} == TARGET_LABELS
+        self.order_top(); self.tap(text='完成'); return result
     def host(self):
         self.sh('am', 'start', '-W', '-f', '0x24000000', '-n', HOST+'/fixture.MainActivity', '--ei', 'compact_height', 70, '--ei', 'widget_width', 300)
         time.sleep(.7)
@@ -189,7 +211,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adb',type=Path,default=ROOT/'.tools/sdk/platform-tools/adb.exe')
     parser.add_argument('--serial',default='127.0.0.1:16384')
-    parser.add_argument('--apk',type=Path,default=ROOT/'dist/yisou-0.7.0.apk')
+    parser.add_argument('--apk',type=Path,default=ROOT/'dist/yisou-0.8.0.apk')
     parser.add_argument('--disposable-emulator',action='store_true')
     parser.add_argument('--run',action='store_true')
     args=parser.parse_args()

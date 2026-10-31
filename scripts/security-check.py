@@ -15,7 +15,7 @@ def check():
     files = collect()
     font = (ROOT/'app/src/main/res/font/noto_serif_sc_regular.otf').read_bytes()
     assert hashlib.sha256(font).hexdigest() == 'e8f396decc1f0963a016a989c3d8852e863d1350996f573860a80767c83a1cd3', 'Bundled font differs from reviewed upstream binary'
-    icon_hashes = {'platform_douban.png': '873fedebaf8cdc832f4eb70d3f500d397fa5b6236ac20679dc39a936b9b77fc0', 'platform_taobao.png': 'e8bab27669864624f6714ebd2a9c406f6c6cddb350b85845292794cdd6549f61', 'platform_xianyu.png': 'c736e422845c495406d33375a4248c5bb12d91cffac90cf5a5eeed5c3c7e6ecd', 'platform_wechat.png': '63b3e7dd50d8e08308e1b19257ca527ebeeb97f3fce67f86549acd2d7966914a', 'platform_bilibili.png': 'd210b88eccad05224e09022a6d9f3eb5b67f65789f35e3e92d4d610ed2b86dc4', 'platform_pinduoduo.png': '125020950c137239022a4e369ce11cc859898ffaceef559656acd8b766ff191a', 'platform_xiaohongshu.png': '45a48b9c69de013fa1bad5e3bf36a55593061dbf57c9c030094435df2ca5bbdb'}
+    icon_hashes = {'platform_douban.png': '873fedebaf8cdc832f4eb70d3f500d397fa5b6236ac20679dc39a936b9b77fc0', 'platform_taobao.png': 'e8bab27669864624f6714ebd2a9c406f6c6cddb350b85845292794cdd6549f61', 'platform_xianyu.png': 'c736e422845c495406d33375a4248c5bb12d91cffac90cf5a5eeed5c3c7e6ecd', 'platform_wechat.png': '63b3e7dd50d8e08308e1b19257ca527ebeeb97f3fce67f86549acd2d7966914a', 'platform_bilibili.png': 'd210b88eccad05224e09022a6d9f3eb5b67f65789f35e3e92d4d610ed2b86dc4', 'platform_pinduoduo.png': '125020950c137239022a4e369ce11cc859898ffaceef559656acd8b766ff191a', 'platform_xiaohongshu.png': '45a48b9c69de013fa1bad5e3bf36a55593061dbf57c9c030094435df2ca5bbdb', 'platform_meituan.png': 'e05f32ce6cc2e9bbc57ede166400a9ce179a6cfaa379e1465673f5ad4b030f3c', 'platform_ctrip.png': 'b16267dce5daf9cf034faa8a9531d7f1a61e638eb316d3254fc6c947f396a904', 'platform_amap.png': 'fff3f061b8746e3bcb538d5fe451458718dbebabb55e497b730d263dff02e89c', 'platform_taobao_shangou.png': '8d2bbcba156cbde41e8179cfd5cd7ba7cff457793a3b6a07187f0fd0dbc85eb7'}
     for name, digest in icon_hashes.items():
         assert hashlib.sha256((ROOT/"app/src/main/res/drawable-nodpi"/name).read_bytes()).hexdigest() == digest, "Bundled platform icon differs from reviewed asset: "+name
     license_text = (ROOT/'LICENSE').read_text(encoding='utf-8')
@@ -42,6 +42,11 @@ def check():
     android = '{http://schemas.android.com/apk/res/android}'
     manifest = ET.parse(ROOT/'app/src/main/AndroidManifest.xml').getroot()
     assert not manifest.findall('uses-permission'), 'Review new runtime permissions before publishing'
+    expected_packages = {'com.douban.frodo', 'com.taobao.taobao', 'com.taobao.idlefish', 'com.tencent.mm', 'tv.danmaku.bili', 'com.xunmeng.pinduoduo', 'com.xingin.xhs', 'com.sankuai.meituan', 'ctrip.android.view', 'com.autonavi.minimap', 'me.ele'}
+    queries = manifest.find('queries')
+    assert queries is not None and {p.get(android+'name') for p in queries.findall('package')} == expected_packages, 'Only the eleven supported packages may be queried'
+    assert not queries.findall('intent') and not queries.findall('provider'), 'No broad app discovery'
+
     app = manifest.find('application')
     assert app.get(android+'allowBackup') == 'false'
     assert app.get(android+'fullBackupContent') == 'false'

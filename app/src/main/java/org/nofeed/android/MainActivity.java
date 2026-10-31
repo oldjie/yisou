@@ -306,7 +306,7 @@ public class MainActivity extends Activity {
         ui.action(desktop, "添加桌面小组件", "4 × 1 · 搜索框与应用图标", () -> SearchWidget.add(this));
         LinearLayout about = ui.group(body, "关于");
         ui.action(about, "开源许可与源码", "GNU AGPL v3 · 查看许可与本版本源码", () -> LicenseInfo.show(this));
-        TextView footer = ui.text("一搜 0.7.0 · 让搜索直达目的地", 12, muted);
+        TextView footer = ui.text("一搜 0.8.0 · 让搜索直达目的地", 12, muted);
         footer.setGravity(Gravity.CENTER); footer.setPadding(0, dp(24), 0, 0); body.addView(footer);
     }
     @Override public void onBackPressed() { if (!"home".equals(screen)) showHome(); else super.onBackPressed(); }

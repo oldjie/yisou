@@ -24,3 +24,20 @@
 - tv.danmaku.bili：`ad073a3e01e26c336b7e65181f6acb40e920698bb40fb15ee35e03ff6fb02799`
 - com.xunmeng.pinduoduo：`25bb13c6fad8336febf3c43e78c07b352d85b3f7fe86da6b8e82ab5360cef5ce`
 - com.xingin.xhs：`510ee7bc44620144d91bd0f8f52642b12d4e4b57dc9c8d3e1e71385856357226`
+
+## 0.8.0 新增平台（2026-11-01）
+
+在原有七个平台图标之外新增四个；原七个文件不变。来源均为当日应用宝原版，包名、商店校验值与签名核对后，用同一导图工具读取图标资源；不执行原版代码，原APK不发布。淘宝闪购使用独立客户端 me.ele，与现有淘宝 com.taobao.taobao 分开。
+
+| 图标 | 原版包名 / 版本 | PNG SHA-256 |
+| --- | --- | --- |
+| platform_meituan.png | com.sankuai.meituan 12.68.202 | `e05f32ce6cc2e9bbc57ede166400a9ce179a6cfaa379e1465673f5ad4b030f3c` |
+| platform_ctrip.png | ctrip.android.view 8.97.0 | `b16267dce5daf9cf034faa8a9531d7f1a61e638eb316d3254fc6c947f396a904` |
+| platform_amap.png | com.autonavi.minimap 17.02.0.2010 | `fff3f061b8746e3bcb538d5fe451458718dbebabb55e497b730d263dff02e89c` |
+| platform_taobao_shangou.png | me.ele 12.10.38 | `8d2bbcba156cbde41e8179cfd5cd7ba7cff457793a3b6a07187f0fd0dbc85eb7` |
+
+原版来源与 APK SHA-256：
+- com.sankuai.meituan：https://sj.qq.com/appdetail/com.sankuai.meituan；`a16d5ab55d37cf1b6bb869e71a8fc7251ff8d98eb0b14bfb3adf57006d7f417a`
+- ctrip.android.view：https://sj.qq.com/appdetail/ctrip.android.view；`43785d822086ce3fb66bcc3373938568e16d05817d6e478450ab564434ef14b6`
+- com.autonavi.minimap：https://sj.qq.com/appdetail/com.autonavi.minimap；`3ecc20305f523a346d4d374ba4f0ffd3ef66d5c48b98526e08d7b613e9a7df19`
+- me.ele：https://sj.qq.com/appdetail/me.ele；`dd51a8e753d9786d18c9580c1185e683a1d17874a85bed633e4ec1bffedec283`

@@ -19,11 +19,21 @@ public final class IconExportActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); TextView result = new TextView(this); setContentView(result);
         try {
-            String[] packages = {"com.douban.frodo", "com.taobao.taobao", "com.taobao.idlefish", "com.tencent.mm", "tv.danmaku.bili", "com.xunmeng.pinduoduo", "com.xingin.xhs"};
-            String[] names = {"douban", "taobao", "xianyu", "wechat", "bilibili", "pinduoduo", "xiaohongshu"};
+            String[] packages = {"com.douban.frodo", "com.taobao.taobao", "com.taobao.idlefish", "com.tencent.mm", "tv.danmaku.bili", "com.xunmeng.pinduoduo", "com.xingin.xhs", "com.sankuai.meituan", "ctrip.android.view", "com.autonavi.minimap", "me.ele"};
+            String[] names = {"douban", "taobao", "xianyu", "wechat", "bilibili", "pinduoduo", "xiaohongshu", "meituan", "ctrip", "amap", "taobao_shangou"};
+            java.util.Set<String> allowed = new java.util.HashSet<>(java.util.Arrays.asList(packages));
+            java.util.Set<String> selected = new java.util.LinkedHashSet<>();
+            String[] requested = getIntent().getStringArrayExtra("packages");
+            if (requested == null) selected.addAll(allowed);
+            else for (String name : requested) {
+                if (!allowed.contains(name)) throw new IllegalArgumentException("Unsupported icon package");
+                selected.add(name);
+            }
+            if (selected.isEmpty()) throw new IllegalArgumentException("No icon packages selected");
             File base = getExternalFilesDir(null), output = new File(base, "icons"); output.mkdirs();
             JSONArray sources = new JSONArray();
             for (int i = 0; i < packages.length; i++) {
+                if (!selected.contains(packages[i])) continue;
                 File apk = new File(new File(base, "archives"), packages[i] + ".apk");
                 PackageInfo info = getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), 0);
                 if (info == null || !packages[i].equals(info.packageName)) throw new IllegalArgumentException("APK identity mismatch");

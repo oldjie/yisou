@@ -35,6 +35,10 @@ final class AppCatalog {
             case BILIBILI: id = R.drawable.platform_bilibili; break;
             case PINDUODUO: id = R.drawable.platform_pinduoduo; break;
             case XIAOHONGSHU: id = R.drawable.platform_xiaohongshu; break;
+            case MEITUAN: id = R.drawable.platform_meituan; break;
+            case CTRIP: id = R.drawable.platform_ctrip; break;
+            case AMAP: id = R.drawable.platform_amap; break;
+            case TAOBAO_SHANGOU: id = R.drawable.platform_taobao_shangou; break;
             default: throw new AssertionError(target);
         }
         return context.getDrawable(id);

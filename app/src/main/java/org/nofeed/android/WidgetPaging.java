@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package org.nofeed.android;
 
-/** Width-aware pages with one whole item of overlap, independent of app order. */
+/** Full-width pages that fully expose every app, independent of app order. */
 final class WidgetPaging {
     private final int stride, lastStart, visible, lastItem;
     final int lastPage;
@@ -13,7 +13,9 @@ final class WidgetPaging {
         if (!dynamicViewport) viewport = Math.min(120, viewport);
         visible = Math.max(1, viewport / 44);
         lastItem = Math.max(0, count - 1);
-        stride = Math.max(1, visible - 1);
+        // Advance a full set of complete items. A clipped edge item becomes
+        // complete on the next page; do not reserve a whole item for overlap.
+        stride = visible;
         lastStart = Math.max(0, count - visible);
         lastPage = (lastStart + stride - 1) / stride;
     }

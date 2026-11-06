@@ -15,7 +15,7 @@ public final class WidgetPagingTest {
             check(state.page == page, "Forward arrow visits consecutive pages");
             check(state.position >= 0 && state.position < Math.max(1, count), "Position stays within catalog");
             if (previous >= 0 && visible > 1)
-                check(state.position < previous + visible, "Adjacent pages share a complete app");
+                check(state.position <= previous + visible, "Full-page movement cannot skip an app");
             for (int i = state.position; i < Math.min(count, state.position + visible); i++) seen[i] = true;
             previous = state.position;
             if (page < pages.lastPage) {
@@ -40,12 +40,15 @@ public final class WidgetPagingTest {
             }
         WidgetPaging pages = new WidgetPaging(11, 300, true);
         WidgetPaging.State middle = pages.next(0, false);
-        check(middle.position == 3 && !middle.backwards, "The 4.5-app viewport must visit its middle, not jump to the end");
-        check(pages.scrollTarget(middle, false) == 6, "Forward scroll must request the new page's final full item, outside the initial viewport");
-        check(pages.scrollTarget(middle, true) == 3, "Backward scroll must request the page's first item");
+        check(middle.position == 4 && !middle.backwards, "A 4.5-app viewport advances four apps while retaining a middle page");
+        check(pages.lastPage == 2, "Eleven apps fit in three pages at the normal width");
+        check(new WidgetPaging(11, 220, true).lastPage == 5, "Narrow viewport takes six pages instead of ten");
+        check(new WidgetPaging(11, 300, false).lastPage == 5, "Legacy viewport also advances two complete apps instead of one");
+        check(pages.scrollTarget(middle, false) == 7, "Forward scroll must request the new page's final full item, outside the initial viewport");
+        check(pages.scrollTarget(middle, true) == 4, "Backward scroll must request the page's first item");
         WidgetPaging.State end = pages.at(pages.lastPage, false);
         check(end.backwards && pages.scrollTarget(end, false) == 10, "Arrival at the end still moves forward before the arrow reverses");
         check(new WidgetPaging(11, 800, true).lastPage == 0, "No paging needed when all apps fit");
-        System.out.println("Widget paging tests passed (all apps fully reachable, overlap, reverse traversal, resize, legacy viewport).");
+        System.out.println("Widget paging tests passed (full-page stride, all apps fully reachable, reverse traversal, resize, legacy viewport).");
     }
 }

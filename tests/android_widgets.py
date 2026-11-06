@@ -18,6 +18,7 @@ p.add_argument('--apk', type=Path, required=True)
 p.add_argument('--disposable-emulator', action='store_true')
 p.add_argument('--paging-widths', type=int, nargs='+', default=[300,220,250],
                help='Widget widths in dp; keep each within the test screen width')
+p.add_argument('--paging-only', action='store_true', help='Run arrow coverage and refresh checks without submitting third-party searches')
 a = p.parse_args()
 root = Path(__file__).resolve().parents[1]
 host = 'org.nofeed.widgetfixture'
@@ -104,12 +105,15 @@ def arrow_coverage(width):
         shell('input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(.4)
         current=nodes(); full=page(current)
         assert full and full!=history[-1], ('Arrow did not advance',width,history)
-        assert set(full)&set(history[-1]), ('Adjacent pages lost their overlap',width,history[-1],full)
+        assert set(full)-seen, ('Next page must expose additional complete apps',width,history,full)
         history.append(full);seen.update(full)
-        if width==300:capture('paging-0.8.1-'+str(len(history))+'.png')
+        if width==300:capture('paging-0.8.2-'+str(len(history))+'.png')
     else: raise AssertionError('Forward arrow never reached the last page')
     assert seen==set(target_labels), ('Arrow-only paging skipped apps',width,set(target_labels)-seen,history)
     assert len(history)>2, ('Eleven apps need intermediate pages at this width',width,history)
+    expected={300:3,220:6,250:4}
+    if width in expected:
+        assert len(history)==expected[width], ('Full-page stride requires fewer pages',width,history)
     for expected in reversed(history[:-1]):
         arrow=next(n for n in current if n.get('resource-id')=='org.nofeed.android:id/widget_next')
         assert arrow.get('content-desc')=='前一组应用'
@@ -122,25 +126,9 @@ def arrow_coverage(width):
     launch_host(width)
     assert page(nodes())==history[0]
     find(desc='下一组应用')
-    print('PASS arrow-only paging fully exposes all eleven apps and retraces '+str(len(history))+' overlapping pages at '+str(width)+'dp; refresh resets arrow',flush=True)
+    print('PASS full-page arrows fully expose all eleven apps and retrace '+str(len(history))+' pages at '+str(width)+'dp; refresh resets arrow',flush=True)
 
-if 'package:'+host in shell('pm', 'list', 'packages', host).splitlines():
-    raise SystemExit('Existing test host detected; remove it deliberately before running')
-keyboard = shell('settings', 'get', 'secure', 'show_ime_with_hard_keyboard')
-installed = False
-try:
-    adb('install', '-r', str(a.apk.resolve()))
-    adb('install', str(root/'build/widget-fixture/fixture.apk')); installed = True
-    shell('appwidget', 'grantbind', '--package', host, '--user', '0')
-    shell('settings', 'put', 'secure', 'show_ime_with_hard_keyboard', '1')
-    launch_host(); ns = nodes()
-    assert not any(n.get('text') == 'TEST_BIND_DENIED' for n in ns)
-    assert any('OEM 自适应包装图标：回归通过' in n.get('text','') for n in ns)
-    assert len([n for n in ns if n.get('content-desc') == '输入关键词并选择搜索应用']) == 1
-    assert not any(n.get('text') in target_labels for n in ns), 'Widget icons have no visible names'
-    capture('widgets.png')
-    print('PASS one compact RemoteViews layout and production OEM icon regression', flush=True)
-    for width in a.paging_widths: arrow_coverage(width)
+def remaining_checks():
     launch_host()
     initial={n.get('content-desc') for n in nodes()}
     swipe_apps(True); after={n.get('content-desc') for n in nodes()}
@@ -175,6 +163,25 @@ try:
     denied = subprocess.run([a.adb, '-s', a.serial, 'shell', 'am', 'start', '-n', 'org.nofeed.android/.WidgetSearchActivity'], capture_output=True, text=True, encoding='utf-8', errors='replace')
     assert 'Permission Denial' in denied.stdout+denied.stderr
     print('PASS external callers cannot launch the private widget input directly', flush=True)
+
+if 'package:'+host in shell('pm', 'list', 'packages', host).splitlines():
+    raise SystemExit('Existing test host detected; remove it deliberately before running')
+keyboard = shell('settings', 'get', 'secure', 'show_ime_with_hard_keyboard')
+installed = False
+try:
+    adb('install', '-r', str(a.apk.resolve()))
+    adb('install', str(root/'build/widget-fixture/fixture.apk')); installed = True
+    shell('appwidget', 'grantbind', '--package', host, '--user', '0')
+    shell('settings', 'put', 'secure', 'show_ime_with_hard_keyboard', '1')
+    launch_host(); ns = nodes()
+    assert not any(n.get('text') == 'TEST_BIND_DENIED' for n in ns)
+    assert any('OEM 自适应包装图标：回归通过' in n.get('text','') for n in ns)
+    assert len([n for n in ns if n.get('content-desc') == '输入关键词并选择搜索应用']) == 1
+    assert not any(n.get('text') in target_labels for n in ns), 'Widget icons have no visible names'
+    capture('widgets.png')
+    print('PASS one compact RemoteViews layout and production OEM icon regression', flush=True)
+    for width in a.paging_widths: arrow_coverage(width)
+    if not a.paging_only: remaining_checks()
 finally:
     if keyboard == 'null': shell('settings', 'delete', 'secure', 'show_ime_with_hard_keyboard')
     else: shell('settings', 'put', 'secure', 'show_ime_with_hard_keyboard', keyboard)

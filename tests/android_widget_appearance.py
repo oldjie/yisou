@@ -211,7 +211,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adb',type=Path,default=ROOT/'.tools/sdk/platform-tools/adb.exe')
     parser.add_argument('--serial',default='127.0.0.1:16384')
-    parser.add_argument('--apk',type=Path,default=ROOT/'dist/yisou-0.8.0.apk')
+    parser.add_argument('--apk',type=Path,default=ROOT/'dist/yisou-0.8.1.apk')
     parser.add_argument('--disposable-emulator',action='store_true')
     parser.add_argument('--run',action='store_true')
     args=parser.parse_args()

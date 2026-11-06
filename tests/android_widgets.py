@@ -16,6 +16,8 @@ p.add_argument('--adb', required=True)
 p.add_argument('--serial', required=True)
 p.add_argument('--apk', type=Path, required=True)
 p.add_argument('--disposable-emulator', action='store_true')
+p.add_argument('--paging-widths', type=int, nargs='+', default=[300,220,250],
+               help='Widget widths in dp; keep each within the test screen width')
 a = p.parse_args()
 root = Path(__file__).resolve().parents[1]
 host = 'org.nofeed.widgetfixture'
@@ -84,6 +86,44 @@ def target_visible(target):
 def close_sheet():
     tap(desc='关闭快捷搜索'); launch_host()
 
+def arrow_coverage(width):
+    # No swipe fallback: the arrow alone must expose every complete icon.
+    launch_host(width)
+    def page(current):
+        query=next(n for n in current if n.get('resource-id')=='org.nofeed.android:id/widget_query')
+        _,top,_,bottom=map(int,re.findall(r'\d+',query.get('bounds')))
+        full_width=(bottom-top)*44/36
+        return tuple(n.get('content-desc').split('，',1)[0] for n in current
+                     if n.get('content-desc','').endswith('，输入并搜索')
+                     and (lambda b:b[2]-b[0]>=full_width-2)(list(map(int,re.findall(r'\d+',n.get('bounds'))))))
+    current=nodes(); history=[page(current)]; seen=set(history[0])
+    for _ in range(len(target_labels)):
+        arrow=next(n for n in current if n.get('resource-id')=='org.nofeed.android:id/widget_next')
+        if arrow.get('content-desc')=='前一组应用': break
+        x1,y1,x2,y2=map(int,re.findall(r'\d+',arrow.get('bounds')))
+        shell('input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(.4)
+        current=nodes(); full=page(current)
+        assert full and full!=history[-1], ('Arrow did not advance',width,history)
+        assert set(full)&set(history[-1]), ('Adjacent pages lost their overlap',width,history[-1],full)
+        history.append(full);seen.update(full)
+        if width==300:capture('paging-0.8.1-'+str(len(history))+'.png')
+    else: raise AssertionError('Forward arrow never reached the last page')
+    assert seen==set(target_labels), ('Arrow-only paging skipped apps',width,set(target_labels)-seen,history)
+    assert len(history)>2, ('Eleven apps need intermediate pages at this width',width,history)
+    for expected in reversed(history[:-1]):
+        arrow=next(n for n in current if n.get('resource-id')=='org.nofeed.android:id/widget_next')
+        assert arrow.get('content-desc')=='前一组应用'
+        x1,y1,x2,y2=map(int,re.findall(r'\d+',arrow.get('bounds')))
+        shell('input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(.4)
+        current=nodes();assert page(current)==expected, ('Return arrow skipped a page',width,expected,page(current))
+    assert any(n.get('content-desc')=='下一组应用' for n in current)
+    # Reapply after reaching the end must reset both position and arrow text.
+    for _ in history[:-1]: tap(desc='下一组应用')
+    launch_host(width)
+    assert page(nodes())==history[0]
+    find(desc='下一组应用')
+    print('PASS arrow-only paging fully exposes all eleven apps and retraces '+str(len(history))+' overlapping pages at '+str(width)+'dp; refresh resets arrow',flush=True)
+
 if 'package:'+host in shell('pm', 'list', 'packages', host).splitlines():
     raise SystemExit('Existing test host detected; remove it deliberately before running')
 keyboard = shell('settings', 'get', 'secure', 'show_ime_with_hard_keyboard')
@@ -100,11 +140,8 @@ try:
     assert not any(n.get('text') in target_labels for n in ns), 'Widget icons have no visible names'
     capture('widgets.png')
     print('PASS one compact RemoteViews layout and production OEM icon regression', flush=True)
-    initial_apps=[n.get('content-desc') for n in ns if n.get('content-desc','').endswith('，输入并搜索')]
-    tap(desc='下一组应用')
-    assert any(n.get('content-desc','').endswith('，输入并搜索') and n.get('content-desc') not in initial_apps for n in nodes())
-    tap(desc='前一组应用'); find(desc=initial_apps[0])
-    print('PASS explicit arrow controls reach both ends of the collection', flush=True)
+    for width in a.paging_widths: arrow_coverage(width)
+    launch_host()
     initial={n.get('content-desc') for n in nodes()}
     swipe_apps(True); after={n.get('content-desc') for n in nodes()}
     assert after != initial and any(d and d.endswith('，输入并搜索') and d not in initial for d in after), 'Horizontal drag must reveal additional apps'

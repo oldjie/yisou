@@ -35,6 +35,7 @@ ROOT_FILES = (
     'docs/widget-input-dark-yisou-0.7.0.png',
     'docs/more-yisou-0.8.0.png',
     'docs/widget-yisou-0.8.0-scrolled.png',
+    'docs/widget-middle-yisou-0.8.1.png',
     'docs/settings-yisou-0.6.1.png',
     'docs/more-yisou-0.6.1.png',
     'docs/home-yisou-0.6.0.png',

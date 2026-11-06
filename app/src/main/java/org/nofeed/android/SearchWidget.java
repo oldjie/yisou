@@ -92,8 +92,10 @@ public class SearchWidget extends AppWidgetProvider {
             Intent advance = new Intent(context, SearchWidget.class).setAction(context.getPackageName()+".WIDGET_PAGE")
                     .setData(Uri.parse("yisou://widget/"+id+"/page")).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id);
             view.setOnClickPendingIntent(R.id.widget_next, PendingIntent.getBroadcast(context, 0, advance, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-            view.setScrollPosition(R.id.widget_apps, 0);
-            context.getSharedPreferences("widget_ui", Context.MODE_PRIVATE).edit().putBoolean("end_"+id, false).apply();
+            WidgetPaging pages = new WidgetPaging(AppCatalog.ordered(context).size(), width, Build.VERSION.SDK_INT >= 31);
+            showPage(view, pages, pages.at(0, false), false);
+            context.getSharedPreferences("widget_ui", Context.MODE_PRIVATE).edit()
+                    .remove("end_"+id).putInt("page_"+id, 0).putBoolean("backwards_"+id, false).apply();
             manager.updateAppWidget(id, view);
             if (Build.VERSION.SDK_INT < 31) manager.notifyAppWidgetViewDataChanged(id, R.id.widget_apps);
         }
@@ -105,18 +107,26 @@ public class SearchWidget extends AppWidgetProvider {
             android.appwidget.AppWidgetProviderInfo info = manager.getAppWidgetInfo(id);
             if (info == null || !info.provider.equals(new ComponentName(context, SearchWidget.class))) return;
             android.content.SharedPreferences prefs = context.getSharedPreferences("widget_ui", Context.MODE_PRIVATE);
-            boolean end = !prefs.getBoolean("end_"+id, false); prefs.edit().putBoolean("end_"+id, end).apply();
+            int width = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
+            WidgetPaging pages = new WidgetPaging(AppCatalog.ordered(context).size(), width, Build.VERSION.SDK_INT >= 31);
+            WidgetPaging.State previous = pages.at(prefs.getInt("page_"+id, 0), prefs.getBoolean("backwards_"+id, false));
+            WidgetPaging.State page = pages.next(previous.page, previous.backwards);
+            prefs.edit().putInt("page_"+id, page.page).putBoolean("backwards_"+id, page.backwards).apply();
             RemoteViews action = new RemoteViews(context.getPackageName(), R.layout.search_widget_compact);
-            action.setScrollPosition(R.id.widget_apps, end ? SearchTarget.values().length - 1 : 0);
-            action.setTextViewText(R.id.widget_next, end ? "‹" : "›");
-            action.setContentDescription(R.id.widget_next, end ? "前一组应用" : "下一组应用");
+            showPage(action, pages, page, previous.backwards);
             manager.partiallyUpdateAppWidget(id, action); return;
         }
         super.onReceive(context, intent);
     }
     @Override public void onDeleted(Context context, int[] ids) {
         android.content.SharedPreferences.Editor edit = context.getSharedPreferences("widget_ui", Context.MODE_PRIVATE).edit();
-        for (int id : ids) edit.remove("end_"+id); edit.apply();
+        for (int id : ids) edit.remove("end_"+id).remove("page_"+id).remove("backwards_"+id); edit.apply();
+    }
+    private static void showPage(RemoteViews view, WidgetPaging pages, WidgetPaging.State page, boolean movingBackwards) {
+        view.setScrollPosition(R.id.widget_apps, pages.scrollTarget(page, movingBackwards));
+        view.setTextViewText(R.id.widget_next, page.backwards ? "‹" : "›");
+        view.setContentDescription(R.id.widget_next, page.backwards ? "前一组应用" : "下一组应用");
+        view.setViewVisibility(R.id.widget_next, pages.lastPage == 0 ? android.view.View.INVISIBLE : android.view.View.VISIBLE);
     }
     static RemoteViews icon(Context context, SearchTarget target) {
         android.graphics.drawable.Drawable artwork = AppCatalog.icon(context, target);
